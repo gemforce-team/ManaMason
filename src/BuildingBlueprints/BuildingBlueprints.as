@@ -15,18 +15,18 @@ package BuildingBlueprints
 	public class BuildingBlueprints extends MovieClip
 	{
 		public const VERSION:String = "1.0";
-		public const GAME_VERSION:String = "1.0.20";
+		public const GAME_VERSION:String = "1.0.20a";
 		public const BEZEL_VERSION:String = "0.1.0";
 		public const MOD_NAME:String = "BuildingBlueprints";
 		
-		private var gameObjects:Object;
+		internal  var gameObjects:Object;
 		
 		// Game object shortcuts
-		private var core:Object;/*IngameCore*/
-		private var cnt:Object;/*CntIngame*/
-		public var GV:Object;/*GV*/
-		public var SB:Object;/*SB*/
-		public var prefs:Object;/*Prefs*/
+		internal var core:Object;/*IngameCore*/
+		internal var cnt:Object;/*CntIngame*/
+		internal var GV:Object;/*GV*/
+		internal var SB:Object;/*SB*/
+		internal var prefs:Object;/*Prefs*/
 		
 		// Mod loader object
 		internal static var bezel:Object;
@@ -236,23 +236,58 @@ package BuildingBlueprints
 		{
 			var pE:KeyboardEvent = e.eventArgs.event;
 
-			if(pE.keyCode == 45)
+			if (pE.keyCode == 45)
 			{
-				this.buildingMode = !this.buildingMode;
-				//logger.log("eh_intercept", "Building mode is now:" + this.buildingMode);
-				eh_ingamePreRenderInfoPanel(null);
-				e.eventArgs.continueDefault = false;
+				if (this.buildingMode)
+				{
+					this.buildingMode = !this.buildingMode;
+					exitBuildingMode();
+					eh_ingamePreRenderInfoPanel(null);
+				}
+				else
+				{
+					//logger.log("eh_intercept", "Building mode is now:" + this.buildingMode);
+					this.core.controller.deselectEverything(true,true);
+					this.buildingMode = true;
+					eh_ingamePreRenderInfoPanel(null);
+				}
 			}
-			else if (pE.keyCode == 33)
+			
+			if (this.buildingMode)
 			{
-				cycleSelectedBlueprint(-1);
-				e.eventArgs.continueDefault = false;
+				if (pE.keyCode == 33)
+				{
+					cycleSelectedBlueprint(-1);
+				}
+				else if (pE.keyCode == 34)
+				{
+					cycleSelectedBlueprint(1);
+				}
+				else if (pE.keyCode == 186)
+				{
+					for each(var struct:Structure in this.selectedBlueprint.structures)
+					{
+						logger.log("Structure report", struct.toString());
+					}
+				}
+				else if (pE.keyCode == 40)
+				{
+					this.selectedBlueprint.flipVertical();
+					this.eh_ingamePreRenderInfoPanel(null);
+				}
+				else if (pE.keyCode == 37)
+				{
+					this.selectedBlueprint.flipHorizontal();
+					this.eh_ingamePreRenderInfoPanel(null);
+				}
+				else if (pE.keyCode == 82)
+				{
+					this.selectedBlueprint.rotate();
+					this.eh_ingamePreRenderInfoPanel(null);
+				}
 			}
-			else if (pE.keyCode == 34)
-			{
-				cycleSelectedBlueprint(1);
-				e.eventArgs.continueDefault = false;
-			}
+			
+			e.eventArgs.continueDefault = !this.buildingMode;
 		}
 		
 		public function eh_ingameClickOnScene(e:Object): void
@@ -261,7 +296,8 @@ package BuildingBlueprints
 			
 			if (this.buildingMode)
 			{
-				logger.log("eh_ingameClickOnScene", "Got a leftclick");
+				//logger.log("eh_ingameClickOnScene", "Got a leftclick");
+				this.selectedBlueprint.castBuild();
 			}
 			//e.eventArgs.continueDefault = false;
 			
@@ -270,10 +306,11 @@ package BuildingBlueprints
 		public function eh_ingameRightClickOnScene(e:Object): void
 		{
 			var mE:MouseEvent = e.eventArgs.event as MouseEvent;
-			
-			this.buildingMode = false;
-			eh_ingamePreRenderInfoPanel(null);
-			return;
+			if (this.buildingMode)
+			{
+				exitBuildingMode();
+				this.buildingMode = false;
+			}
 		}
 		
 		public function eh_ingamePreRenderInfoPanel(e:Object): void
@@ -288,6 +325,11 @@ package BuildingBlueprints
 			{
 				return;
 			}
+			
+			this.core.cnt.cntRetinaHud.removeChildren();
+			this.GV.main.cntInfoPanel.removeChild(this.GV.mcInfoPanel);
+			this.core.cnt.cntRetinaHud.removeChild(this.core.cnt.bmpTowerPlaceAvailMap);
+			this.core.cnt.cntRetinaHud.removeChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
 			
 			var mouseX:Number = this.core.cnt.root.mouseX;
 			var mouseY:Number  = this.core.cnt.root.mouseY;
@@ -309,52 +351,35 @@ package BuildingBlueprints
 			rHUD.addChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
 			
 			//logger.log("eh_ingamePreRender", "Working ");
-			for each (var row:Array in selectedBlueprint.updateStructureCoords(mouseX, mouseY))
+			for each(var structure:Structure in this.selectedBlueprint.updateStructureCoords(mouseX, mouseY))
 			{
-				for each(var structure:Structure in row)
+				if (structure.fitsOnScene() && structure.type != "-" && !structure.rendered)
 				{
-					if (structure.fitsOnScene(mouseX, mouseY) && structure.type != "air" && !structure.processed)
+					if (structure.type == "w")
 					{
-						if (structure.type == "w")
+						if (activeWallHelpers.occupied >= activeWallHelpers.movieClips.length)
 						{
-							//logger.log("eh_ingamePreRender", "length before: " + activeWallHelpers.movieClips.length);
-							if (activeWallHelpers.occupied >= activeWallHelpers.movieClips.length)
-							{
-								//logger.log("eh_ingamePreRender", "In conditional");
-								var mcbwh:Class = Object(this.core.cnt.mcBuildHelperWallLine).constructor;
-								//logger.log("eh_ingamePreRender", "Got constructor");
-								activeWallHelpers.movieClips.push(new mcbwh());
-							}
-							//logger.log("eh_ingamePreRender", "length after: " + activeWallHelpers.movieClips.length);
-							//logger.log("eh_ingamePreRender", "Pushed a new mcWallHelper");
-							activeWallHelpers.movieClips[activeWallHelpers.occupied].x = structure.buildingX;
-							activeWallHelpers.movieClips[activeWallHelpers.occupied].y = structure.buildingY;
-							//logger.log("eh_ingamePreRender", "Set wallhelper coords ");
-							activeWallHelpers.movieClips[activeWallHelpers.occupied].rotation = 0;
-							//logger.log("eh_ingamePreRender", "Set rotation ");
-							activeWallHelpers.movieClips[activeWallHelpers.occupied].gotoAndStop(1);
-							//logger.log("eh_ingamePreRender", "Gotoandstop ");
-							activeWallHelpers.occupied++;
-							//logger.log("eh_ingamePreRender", "Occupied++ :" + activeWallHelpers.occupied);
+							var mcbwh:Class = Object(this.core.cnt.mcBuildHelperWallLine).constructor;
+							activeWallHelpers.movieClips.push(new mcbwh());
 						}
-						else
-						{
-							//logger.log("eh_ingamePreRender", "In else block");
-							var typeBitmaps:Object = this.activeBitmaps[structure.type];
-							//logger.log("eh_ingamePreRender", "Got typeBitmap reference");
-							if (typeBitmaps.occupied >= typeBitmaps.bitmaps.length)
-							{
-								//logger.log("eh_ingamePreRender", "Pushing a new bitmap");
-								typeBitmaps.bitmaps.push(new Bitmap(BuildHelper.bitmaps[structure.type].bitmapData));
-								//logger.log("eh_ingamePreRender", "Pushed a new bitmap");
-							}
-							typeBitmaps.bitmaps[typeBitmaps.occupied].x = structure.buildingX;
-							typeBitmaps.bitmaps[typeBitmaps.occupied].y = structure.buildingY;
-							//logger.log("eh_ingamePreRender", "set coords");
-							typeBitmaps.occupied++;
-						}
-						structure.processed = true;
+						activeWallHelpers.movieClips[activeWallHelpers.occupied].x = structure.buildingX;
+						activeWallHelpers.movieClips[activeWallHelpers.occupied].y = structure.buildingY;
+						activeWallHelpers.movieClips[activeWallHelpers.occupied].rotation = 0;
+						activeWallHelpers.movieClips[activeWallHelpers.occupied].gotoAndStop(1);
+						activeWallHelpers.occupied++;
 					}
+					else
+					{
+						var typeBitmaps:Object = this.activeBitmaps[structure.type];
+						if (typeBitmaps.occupied >= typeBitmaps.bitmaps.length)
+						{
+							typeBitmaps.bitmaps.push(new Bitmap(BuildHelper.bitmaps[structure.type].bitmapData));
+						}
+						typeBitmaps.bitmaps[typeBitmaps.occupied].x = structure.buildingX;
+						typeBitmaps.bitmaps[typeBitmaps.occupied].y = structure.buildingY;
+						typeBitmaps.occupied++;
+					}
+					structure.rendered = true;
 				}
 			}
 			
@@ -362,7 +387,6 @@ package BuildingBlueprints
 			{
 				for (var i:int = 0; i < type.occupied; i++)
 				{
-					//logger.log("eh_ingamePreRender", "Adding a child to the retinaHud");
 					rHUD.addChild(type.bitmaps[i]);
 				}
 			}
@@ -390,8 +414,14 @@ package BuildingBlueprints
 			}
 			
 			//this.core.controller.deselectEverything(true,true);
-			this.core.cnt.cntRetinaHud.removeChild(this.core.cnt.bmpTowerPlaceAvailMap);
-			this.core.cnt.cntRetinaHud.removeChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
+		}
+		
+		private function exitBuildingMode(): void
+		{
+			var rHUD:Object = this.core.cnt.cntRetinaHud;
+			rHUD.removeChild(this.core.cnt.bmpTowerPlaceAvailMap);
+			rHUD.removeChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
+			cleanupRetinaHud();
 		}
 		
 		private function test(): void

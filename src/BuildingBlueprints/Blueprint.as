@@ -12,8 +12,9 @@ package BuildingBlueprints
 	public class Blueprint 
 	{
 		private var structureGrid:Array;
+		public var structures:Array;
 		private static var buildHelperBitmaps:Object;
-		private static var allowedSymbols:Array = ["a", "t", "w", "p", "l", "r"];
+		private static var allowedSymbols:Array = ["-", "a", "t", "w", "p", "l", "r"];
 		
 		private static var _emptyBlueprint:Blueprint;
 		public static function get emptyBlueprint():Blueprint 
@@ -26,6 +27,7 @@ package BuildingBlueprints
 		public function Blueprint() 
 		{
 			this.structureGrid = new Array();
+			this.structures = new Array();
 		}
 		
 		public static function fromFile(filePath:String): Blueprint
@@ -37,23 +39,20 @@ package BuildingBlueprints
 				stream.open(new File(filePath), FileMode.READ);
 				var recipe:String = stream.readUTFBytes(stream.bytesAvailable);
 				//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Recipe: " + recipe);
-				var rows:Array = recipe.split("\n");
+				var rows:Array = recipe.split("\r\n");
 				//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Split into " + rows.length + " rows");
 				
-				for (var c:int = 0; c <= rows[0].length; c++)
+				for (var c:int = 0; c < rows[0].length; c++)
 				{
 					for (var r:int = 0; r < rows.length; r++)
 					{
-						//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Row" + rows[r] + "; Looking at symbol " + r + ";" + c + " : " + rows[r].charAt(c));
-						if (rows[r].charAt(c) == "-" || rows[r].charAt(c) == " ")
+						var char:String = rows[r].charAt(c);
+						//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Row\t" + rows[r] + "; Looking at symbol " + r + ";" + c + " : " + char);
+						if (allowedSymbols.indexOf(char) != -1)
 						{
-							//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Setting air");
-							res.setStructureGridSlot(c, r, new Structure("air", c, r));
-						}
-						else if (allowedSymbols.indexOf(rows[r].charAt(c)) != -1)
-						{
-							//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Setting " + rows[r].charAt(c));
-							res.setStructureGridSlot(c, r, new Structure(rows[r].charAt(c), c, r));
+							//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Setting " + char);
+							//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Pushing a new structure " + char + " at " + r + ";" + c);
+							res.setStructureGridSlot(c, r, new Structure(char, c, r));
 						}
 						//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Done processing symbol: " + r + ";" + c);
 					}
@@ -71,31 +70,26 @@ package BuildingBlueprints
 		
 		private function setStructureGridSlot(row:int, column:int, value:Structure): void
 		{
-			for (var w:int = 0; w < value.size.width; w++)
-			{
-				for (var h:int = 0; h < value.size.height; h++)
-				{
-					while (this.structureGrid[row+h] == null)
-					{
-						this.structureGrid.push(new Array());
-					}
-					while (this.structureGrid[row+h][column+w] == null)
-					{
-						this.structureGrid[row+h].push(new Object());
-					}
+			if (this.structureGrid[row] == undefined)
+				this.structureGrid[row] = new Array();
 				
-					if (this.structureGrid[row + h][column + w] is Structure)
-					{
-						return;
-					}
-					else
-					{
-						this.structureGrid[row + h][column + w] = value;
-					}
-				}
+			if (this.structureGrid[row][column] == undefined)
+			{
+				this.structureGrid[row][column] = value;
+				this.structures.push(value);
 			}
+			else
+				return;
 			
-			
+			if (value.size == 2)
+			{
+				this.structureGrid[row][column+1] = value;
+				if (this.structureGrid[row+1] == undefined)
+					this.structureGrid[row+1] = new Array();
+				this.structureGrid[row+1][column] = value;
+				this.structureGrid[row+1][column+1] = value;
+			}
+			//BuildingBlueprints.BuildingBlueprints.logger.log("setStructureGridSlot", "Pushed a new structure " + value.toString());
 		}
 		
 		private static function createTestBlueprint(): Blueprint
@@ -136,16 +130,82 @@ package BuildingBlueprints
 		public function updateStructureCoords(mouseX:Number, mouseY:Number): Array
 		{
 			//BuildingBlueprints.BuildingBlueprints.logger.log("updateStructureCoords", "Updating...");
+			for each(var element:Structure in this.structures)
+			{
+				element.setBuildingCoords(mouseX, mouseY);
+				element.rendered = false;
+			}
+		
+			return this.structures;
+		}
+		
+		public function flipHorizontal(): void
+		{
+			for each (var struct:Structure in this.structures)
+			{
+				//BuildingBlueprints.BuildingBlueprints.logger.log("flipHorizontal", "Flipping..." + struct.toString());
+				struct.flipHorizontal(this.structureGrid[0].length);
+				//BuildingBlueprints.BuildingBlueprints.logger.log("flipHorizontal", "Flipped..." + struct.toString());
+			}
 			for each (var row:Array in this.structureGrid)
 			{
-				for each(var element:Structure in row)
+				row.reverse();
+			}
+		}
+		
+		public function flipVertical(): void
+		{
+			for each (var struct:Structure in this.structures)
+			{
+				//BuildingBlueprints.BuildingBlueprints.logger.log("flipVertical", "Flipping..." + struct.toString());
+				struct.flipVertical(this.structureGrid.length);
+				//BuildingBlueprints.BuildingBlueprints.logger.log("flipVertical", "Flipped..." + struct.toString());
+			}
+			this.structureGrid.reverse();
+		}
+		
+		public function rotate(): void
+		{
+			for each (var struct:Structure in this.structures)
+				struct.transpose();
+			var newGrid:Array = new Array();
+			for (var row:int = 0; row < this.structureGrid.length; row++)
+			{
+				for (var column:int = 0; column < this.structureGrid[row].length; column++)
 				{
-					element.setBuildingCoords(mouseX, mouseY);
-					element.processed = false;
+					if (newGrid[column] == undefined)
+						newGrid.push(new Array());
+					newGrid[column][row] = this.structureGrid[row][column];
 				}
 			}
-			
-			return this.structureGrid;
+			this.structureGrid = newGrid;
+			flipVertical();
+		}
+		
+		public function castBuild(): void
+		{
+			for each (var str:Structure in this.structures)
+			{
+				if(str.fitsOnScene())
+					str.castBuild();
+			}
+			var core:Object = BuildingBlueprints.BuildingBlueprints.bezel.gameObjects.GV.ingameCore;
+			core.renderer2.redrawHighBuildings();
+			core.renderer2.redrawWalls();
+		}
+		
+		public function toString(): String
+		{
+			var res:String = "";
+			for each (var row:Array in this.structureGrid)
+			{
+				res += "\n";
+				for each (var str:Structure in row)
+				{
+					res += str.type;
+				}
+			}
+			return res;
 		}
 	}
 
