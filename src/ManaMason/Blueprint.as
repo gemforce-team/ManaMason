@@ -185,12 +185,13 @@ package ManaMason
 		
 		public function castBuild(): void
 		{
+			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
+			
 			for each (var str:Structure in this.structures)
 			{
-				if(str.fitsOnScene())
+				if(str.fitsOnScene() && core.arrIsSpellBtnVisible[str.spellButtonIndex])
 					str.castBuild();
 			}
-			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
 			core.renderer2.redrawHighBuildings();
 			core.renderer2.redrawWalls();
 			core.resetAllPNNMatrices();

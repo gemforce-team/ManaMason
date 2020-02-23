@@ -25,7 +25,9 @@ package ManaMason
 		public var size:int;
 		private var xOffset:int;
 		private var yOffset:int;
+		
 		public var buildingType:String;
+		public var spellButtonIndex:int;
 		
 		public function Structure(type:String, bpIX:int, bpIY:int) 
 		{
@@ -38,6 +40,7 @@ package ManaMason
 			{
 				this.size = 1;
 				this.buildingType = BUILDING_TYPE.WALL;
+				this.spellButtonIndex = 12;
 				xOffset = 0;
 				yOffset = 0;
 			}
@@ -55,24 +58,29 @@ package ManaMason
 				if (this.type == "r")
 				{
 					this.buildingType = BUILDING_TYPE.TRAP;
+					this.spellButtonIndex = 15;
 					xOffset = 4;
 					yOffset = 4;
 				}
 				else if (this.type == "t")
 				{
 					this.buildingType = BUILDING_TYPE.TOWER;
+					this.spellButtonIndex = 13;
 				}
 				else if (this.type == "l")
 				{
 					this.buildingType = BUILDING_TYPE.LANTERN;
+					this.spellButtonIndex = 16;
 				}
 				else if (this.type == "p")
 				{
 					this.buildingType = BUILDING_TYPE.PYLON;
+					this.spellButtonIndex = 17;
 				}
 				else if (this.type == "a")
 				{
 					this.buildingType = BUILDING_TYPE.AMPLIFIER;
+					this.spellButtonIndex = 14;
 				}
 			}
 		}
@@ -113,11 +121,11 @@ package ManaMason
 		
 		public function castBuild(spendMana:Boolean = true, trackStats:Boolean = false): void
 		{
+			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
+			
 			if (this.type == "-")
 				return;
 				
-			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
-			
 			if (spendMana && core.getMana() < this.getCurrentManaCost())
 				return;
 				
@@ -151,6 +159,7 @@ package ManaMason
 							core.stats.spentManaOnTraps += Math.max(0, this.getCurrentManaCost());
 						}
 					}
+					else return;
 				}
 				else if (!core.calculator.isNew2x2BuildingBlocking(buildingGridX, buildingGridY))
 				{
@@ -162,28 +171,28 @@ package ManaMason
 							{
 								core.stats.spentManaOnTowers += Math.max(0, this.getCurrentManaCost());
 							}
-							return;
+							break;
 						case "a":
 							core.creator.buildAmplifier(buildingGridX, buildingGridY);
 							if (trackStats)
 							{
 								core.stats.spentManaOnAmplifiers += Math.max(0, this.getCurrentManaCost());
 							}
-							return;
+							break;
 						case "p":
 							core.creator.buildPylon(buildingGridX, buildingGridY);
 							if (trackStats)
 							{
 								core.stats.spentManaOnPylons += Math.max(0, this.getCurrentManaCost());
 							}
-							return;
+							break;
 						case "l":
 							core.creator.buildLantern(buildingGridX, buildingGridY);
 							if (trackStats)
 							{
 								core.stats.spentManaOnLanterns += Math.max(0, this.getCurrentManaCost());
 							}
-							return;
+							break;
 						default:
 							return;
 					}
@@ -191,7 +200,6 @@ package ManaMason
 				else return;
 			}
 			else return;
-			
 			
 			if (spendMana)
 			{

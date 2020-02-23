@@ -19,7 +19,7 @@ package ManaMason
 		public const BEZEL_VERSION:String = "0.1.0";
 		public const MOD_NAME:String = "BuildingBlueprints";
 		
-		internal  var gameObjects:Object;
+		internal var gameObjects:Object;
 		
 		// Game object shortcuts
 		internal var core:Object;/*IngameCore*/
@@ -70,6 +70,7 @@ package ManaMason
 			addEventListeners();
 			
 			logger.log("bind", "ManaMason initialized!");
+			
 			return this;
 		}
 		
@@ -388,7 +389,7 @@ package ManaMason
 			//logger.log("eh_ingamePreRender", "Working ");
 			for each(var structure:Structure in this.selectedBlueprint.updateStructureCoords(mouseX, mouseY))
 			{
-				if (structure.fitsOnScene() && structure.type != "-" && !structure.rendered)
+				if (structure.fitsOnScene() && structure.type != "-" && !structure.rendered && this.core.arrIsSpellBtnVisible[structure.spellButtonIndex])
 				{
 					if (structure.type == "w")
 					{
@@ -459,16 +460,9 @@ package ManaMason
 		private function exitBuildingMode(): void
 		{
 			var rHUD:Object = this.core.cnt.cntRetinaHud;
-			//rHUD.removeChild(this.core.cnt.bmpTowerPlaceAvailMap);
 			rHUD.removeChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
 			rHUD.removeChild(this.core.cnt.bmpWallPlaceAvailMap);
 			cleanupRetinaHud();
-		}
-		
-		private function test(): void
-		{
-					
-			//this.buildingSprites.push(new Bitmap(this.cnt.bmpBuildHelperAmp.bitmapData));
 		}
 	}
 
