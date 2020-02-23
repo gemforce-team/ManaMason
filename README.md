@@ -6,6 +6,7 @@ ManaMason is a game modification for GCFW.
 It allows you to quickly place arbitrary groups of structures, spending mana accordingly. These groups are loaded from blueprints that you specify. Building ghosts are displayed for ease of use when you are in building mode.
 
 ![Like so](https://i.imgur.com/pSykXwo.png)
+![Another example](https://i.imgur.com/T5cqKv6.png)
 
 This is a time saving and QOL mod, exactly the same results can be achieved without it. Mana expenditure stats and achievements should be tracked appropriately, [submit an issue](https://github.com/gemforce-team/ManaMason/issues) if you find that something's off!
 
