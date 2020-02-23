@@ -49,14 +49,14 @@ package ManaMason
 		public function bind(modLoader:Object, gameObjects:Object): ManaMason
 		{
 			bezel = modLoader;
-			logger = bezel.getLogger("BuildingBlueprints");
+			logger = bezel.getLogger("ManaMason");
 			this.gameObjects = gameObjects;
 			this.core = gameObjects.GV.ingameCore;
 			this.cnt = gameObjects.GV.main.cntScreens.cntIngame;
 			this.SB = gameObjects.SB;
 			this.GV = gameObjects.GV;
 			this.prefs = gameObjects.prefs;
-			storage = File.applicationStorageDirectory.resolvePath("Building Blueprints");
+			storage = File.applicationStorageDirectory.resolvePath("ManaMason");
 			
 			this.blueprints = new Array();
 			initActiveBitmaps();
@@ -65,11 +65,11 @@ package ManaMason
 			
 			prepareFolders();
 			
-			this.blueprints = formBlueprintList();
+			reloadBlueprintList();
 			
 			addEventListeners();
 			
-			logger.log("bind", "BuildingBlueprints initialized!");
+			logger.log("bind", "ManaMason initialized!");
 			return this;
 		}
 		
@@ -101,7 +101,7 @@ package ManaMason
 			return 'v' + VERSION + ' for ' + GAME_VERSION;
 		}
 		
-		private function formBlueprintList(): Array
+		private function reloadBlueprintList(): void
 		{
 			var newBlueprints: Array = new Array();
 			var blueprintsFolder:File = storage.resolvePath("blueprints");
@@ -123,7 +123,7 @@ package ManaMason
 				}
 			}
 			
-			logger.log("formBlueprintList", "Found " + newBlueprints.length + " blueprint files.");
+			logger.log("reloadBlueprintList", "Found " + newBlueprints.length + " blueprint files.");
 			
 			if (newBlueprints.length == 0)
 			{
@@ -135,7 +135,7 @@ package ManaMason
 				this.selectedBlueprint = newBlueprints[this.currentBlueprintIndex];
 			}
 			newBlueprints.sortOn("name");
-			return newBlueprints;
+			this.blueprints = newBlueprints;
 		}
 		
 		public function cycleSelectedBlueprint(increment:int): void
@@ -183,7 +183,6 @@ package ManaMason
 		
 		private function prepareFolders(): void
 		{
-			storage = File.applicationStorageDirectory.resolvePath("Building Blueprints");
 			if (!storage.isDirectory)
 			{
 				storage.createDirectory();
@@ -193,6 +192,24 @@ package ManaMason
 			if (!blueprintsFolder.isDirectory)
 			{
 				blueprintsFolder.createDirectory();
+				var exampleBlueprint:File = blueprintsFolder.resolvePath("exampleBlueprint.txt");
+				var bpWriter:FileStream = new FileStream();
+				try
+				{
+					bpWriter.open(exampleBlueprint, FileMode.WRITE);
+					bpWriter.writeUTFBytes("aaaaaa\r\n");
+					bpWriter.writeUTFBytes("aaaaaa\r\n");
+					bpWriter.writeUTFBytes("aattaa\r\n");
+					bpWriter.writeUTFBytes("aattaa\r\n");
+					bpWriter.writeUTFBytes("aaaaaa\r\n");
+					bpWriter.writeUTFBytes("aaaaaa");
+					bpWriter.close();
+				}
+				catch (e:Error)
+				{
+					logger.log("prepareFolders", "Caught an error while preparing folders!");
+					logger.log("prepareFolders", e.message);
+				}
 			}
 		}
 		
@@ -238,31 +255,48 @@ package ManaMason
 		public function eh_interceptKeyboardEvent(e:Object): void
 		{
 			var pE:KeyboardEvent = e.eventArgs.event;
-
+			
 			if (pE.keyCode == 45)
 			{
-				if (this.buildingMode)
+				this.buildingMode = !this.buildingMode;
+				if (!this.buildingMode)
 				{
-					this.buildingMode = !this.buildingMode;
 					exitBuildingMode();
-					eh_ingamePreRenderInfoPanel(null);
 				}
 				else
 				{
-					//logger.log("eh_intercept", "Building mode is now:" + this.buildingMode);
-					this.core.controller.deselectEverything(true,true);
-					this.buildingMode = true;
-					eh_ingamePreRenderInfoPanel(null);
+					if (this.currentBlueprintIndex == -1)
+					{
+						SB.playSound("sndalert");
+						GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"No blueprints in the blueprints folder!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
+						this.buildingMode = false;
+					}
+					else
+					{
+						this.core.controller.deselectEverything(true, true);
+					}
 				}
+				eh_ingamePreRenderInfoPanel(null);
+				e.eventArgs.continueDefault = !this.buildingMode;
+				return;
+			}
+			else if (pE.keyCode == 82 && pE.ctrlKey)
+			{
+				reloadBlueprintList();
+				SB.playSound("sndalert");
+				GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Reloading blueprints!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
+				e.eventArgs.continueDefault = false;
+				eh_ingamePreRenderInfoPanel(null);
+				return;
 			}
 			
 			if (this.buildingMode)
 			{
-				if (pE.keyCode == 33)
+				if (pE.keyCode == 33 || pE.keyCode == 38)
 				{
 					cycleSelectedBlueprint(-1);
 				}
-				else if (pE.keyCode == 34)
+				else if (pE.keyCode == 34 || pE.keyCode == 40)
 				{
 					cycleSelectedBlueprint(1);
 				}
@@ -283,7 +317,6 @@ package ManaMason
 				}
 			}
 			
-			e.eventArgs.continueDefault = !this.buildingMode;
 		}
 		
 		public function eh_ingameClickOnScene(e:Object): void
@@ -292,7 +325,6 @@ package ManaMason
 			
 			if (this.buildingMode)
 			{
-				//logger.log("eh_ingameClickOnScene", "Got a leftclick");
 				this.selectedBlueprint.castBuild();
 				e.eventArgs.continueDefault = false;	
 			}
@@ -322,6 +354,12 @@ package ManaMason
 				return;
 			}
 			
+			if (this.currentBlueprintIndex == -1)
+			{
+				exitBuildingMode();
+				return;
+			}
+			
 			this.GV.main.cntInfoPanel.removeChild(this.GV.mcInfoPanel);
 			
 			var mouseX:Number = this.core.cnt.root.mouseX;
@@ -344,7 +382,7 @@ package ManaMason
                 rHUD.addChild(this.core.cnt.bmpWallPlaceAvailMap);
 			//if(!rHUD.contains(this.core.cnt.bmpTowerPlaceAvailMap))
 			//	rHUD.addChild(this.core.cnt.bmpTowerPlaceAvailMap);
-			if(rHUD.contains(this.core.cnt.bmpNoPlaceBeaconAvailMap))
+			if(!rHUD.contains(this.core.cnt.bmpNoPlaceBeaconAvailMap))
 				rHUD.addChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
 			
 			//logger.log("eh_ingamePreRender", "Working ");
