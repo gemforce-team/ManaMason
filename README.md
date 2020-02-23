@@ -41,7 +41,7 @@ That folder is referred to as **ManaMason folder** in this readme.
 ## Installing the mod
 ### Important warning! ManaMason depends on [Bezel Mod Loader](https://github.com/gemforce-team/BezelModLoader).
 
-**To install the mod** grab a release (links below) for your game version. Copy `ManaMason-x.x-for-y.y.y.swf` from the archive into the `Mods` folder in the game's folder (To navigate to the game's folder: rightclick the game in steam -> Manage -> Browse local files).
+**To install the mod** grab a release (links below) for your game version. Drop `ManaMason-x.x-for-y.y.y.swf` into the `Mods` folder in the game's folder (To navigate to the game's folder: rightclick the game in steam -> Manage -> Browse local files).
 
 **If there is no `Mods` folder**, you need to first install Bezel Mod Loader (link above).
 
