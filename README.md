@@ -15,6 +15,11 @@ This is a time saving and QOL mod, exactly the same results can be achieved with
 https://github.com/gemforce-team/ManaMason/blob/master/Changelog.txt
 
 
+## Known issues
+* Rotating\flipping the blueprints is a bit weird
+* Hotkeys aren't configurable
+
+
 # Mod files
 ManaMason keeps all its files in the game's Local Store folder. It's located in `%AppData%\com.giab.games.gcfw.steam\Local Store\ManaMason` and it's generated on first launch.
 
