@@ -1,4 +1,4 @@
-package BuildingBlueprints 
+package ManaMason 
 {
 	/**
 	 * ...
@@ -12,10 +12,10 @@ package BuildingBlueprints
 	import flash.globalization.LocaleID;
 	import flash.utils.*;
 	
-	public class BuildingBlueprints extends MovieClip
+	public class ManaMason extends MovieClip
 	{
 		public const VERSION:String = "1.0";
-		public const GAME_VERSION:String = "1.0.20a";
+		public const GAME_VERSION:String = "1.0.20c";
 		public const BEZEL_VERSION:String = "0.1.0";
 		public const MOD_NAME:String = "BuildingBlueprints";
 		
@@ -41,12 +41,12 @@ package BuildingBlueprints
 		
 		private var buildingMode:Boolean;
 		
-		public function BuildingBlueprints() 
+		public function ManaMason() 
 		{
 			super();
 		}
 		
-		public function bind(modLoader:Object, gameObjects:Object): BuildingBlueprints
+		public function bind(modLoader:Object, gameObjects:Object): ManaMason
 		{
 			bezel = modLoader;
 			logger = bezel.getLogger("BuildingBlueprints");
@@ -207,13 +207,13 @@ package BuildingBlueprints
 		public function unload(): void
 		{
 			removeEventListeners();
-			for each (var type:Object in this.activeBitmaps)
+			/*for each (var type:Object in this.activeBitmaps)
 			{
 				for (var i:int = 0; i < type.occupied; i++)
 				{
 					type.bitmaps[i].bitmapData.dispose();
 				}
-			}
+			}*/
 			
 			for each (var mc:Object in this.activeWallHelpers.movieClips)
 			{
@@ -222,6 +222,9 @@ package BuildingBlueprints
 			}
 			
 			this.activeWallHelpers = {"occupied":0, "movieClips": new Array()};
+			
+			if(this.buildingMode)
+				exitBuildingMode();
 		}
 		
 		private function removeEventListeners(): void
@@ -263,19 +266,12 @@ package BuildingBlueprints
 				{
 					cycleSelectedBlueprint(1);
 				}
-				else if (pE.keyCode == 186)
-				{
-					for each(var struct:Structure in this.selectedBlueprint.structures)
-					{
-						logger.log("Structure report", struct.toString());
-					}
-				}
-				else if (pE.keyCode == 40)
+				else if (pE.keyCode == 86)
 				{
 					this.selectedBlueprint.flipVertical();
 					this.eh_ingamePreRenderInfoPanel(null);
 				}
-				else if (pE.keyCode == 37)
+				else if (pE.keyCode == 70)
 				{
 					this.selectedBlueprint.flipHorizontal();
 					this.eh_ingamePreRenderInfoPanel(null);
@@ -298,8 +294,8 @@ package BuildingBlueprints
 			{
 				//logger.log("eh_ingameClickOnScene", "Got a leftclick");
 				this.selectedBlueprint.castBuild();
+				e.eventArgs.continueDefault = false;	
 			}
-			//e.eventArgs.continueDefault = false;
 			
 		}
 		
@@ -326,10 +322,7 @@ package BuildingBlueprints
 				return;
 			}
 			
-			this.core.cnt.cntRetinaHud.removeChildren();
 			this.GV.main.cntInfoPanel.removeChild(this.GV.mcInfoPanel);
-			this.core.cnt.cntRetinaHud.removeChild(this.core.cnt.bmpTowerPlaceAvailMap);
-			this.core.cnt.cntRetinaHud.removeChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
 			
 			var mouseX:Number = this.core.cnt.root.mouseX;
 			var mouseY:Number  = this.core.cnt.root.mouseY;
@@ -347,8 +340,12 @@ package BuildingBlueprints
 			this.core.lastZoneYMax = 8 + 28 + 28 * vY;
 			
 			var rHUD:Object = this.core.cnt.cntRetinaHud;
-			rHUD.addChild(this.core.cnt.bmpTowerPlaceAvailMap);
-			rHUD.addChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
+			if(!rHUD.contains(this.core.cnt.bmpWallPlaceAvailMap))
+                rHUD.addChild(this.core.cnt.bmpWallPlaceAvailMap);
+			//if(!rHUD.contains(this.core.cnt.bmpTowerPlaceAvailMap))
+			//	rHUD.addChild(this.core.cnt.bmpTowerPlaceAvailMap);
+			if(rHUD.contains(this.core.cnt.bmpNoPlaceBeaconAvailMap))
+				rHUD.addChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
 			
 			//logger.log("eh_ingamePreRender", "Working ");
 			for each(var structure:Structure in this.selectedBlueprint.updateStructureCoords(mouseX, mouseY))
@@ -399,28 +396,34 @@ package BuildingBlueprints
 		
 		private function cleanupRetinaHud(): void
 		{
+			var rHUD:Object = this.core.cnt.cntRetinaHud;
 			//logger.log("cleanupRetinaHud", "Cleaning up...");
 			for each (var bitmapType:Object in this.activeBitmaps)
 			{
 				for each (var bitmap:Object in bitmapType.bitmaps)
 				{
-					this.core.cnt.cntRetinaHud.removeChild(bitmap);
+					rHUD.removeChild(bitmap);
 				}
 			}
 			
 			for each (var wallMC:Object in this.activeWallHelpers.movieClips)
 			{
-				this.core.cnt.cntRetinaHud.removeChild(wallMC);
+				rHUD.removeChild(wallMC);
 			}
 			
+			for each(var baseBitmap:Object in BuildHelper.bitmaps)
+			{
+				rHUD.removeChild(baseBitmap);
+			}
 			//this.core.controller.deselectEverything(true,true);
 		}
 		
 		private function exitBuildingMode(): void
 		{
 			var rHUD:Object = this.core.cnt.cntRetinaHud;
-			rHUD.removeChild(this.core.cnt.bmpTowerPlaceAvailMap);
+			//rHUD.removeChild(this.core.cnt.bmpTowerPlaceAvailMap);
 			rHUD.removeChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
+			rHUD.removeChild(this.core.cnt.bmpWallPlaceAvailMap);
 			cleanupRetinaHud();
 		}
 		

@@ -1,4 +1,4 @@
-package BuildingBlueprints 
+package ManaMason 
 {
 	/**
 	 * ...
@@ -6,8 +6,9 @@ package BuildingBlueprints
 	 */
 	
 	import flash.filesystem.*;
+	import flash.utils.*;
 	import flash.display.Bitmap;
-	import BuildingBlueprints.BuildHelper;
+	import ManaMason.BuildHelper;
 	
 	public class Blueprint 
 	{
@@ -61,9 +62,9 @@ package BuildingBlueprints
 			}
 			catch (e:Error)
 			{
-				BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Caught an error when trying to load " + filePath);
-				BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", e.message);
-				BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", e.getStackTrace());
+				ManaMason.ManaMason.logger.log("fromFile", "Caught an error when trying to load " + filePath);
+				ManaMason.ManaMason.logger.log("fromFile", e.message);
+				ManaMason.ManaMason.logger.log("fromFile", e.getStackTrace());
 			}
 			return emptyBlueprint;
 		}
@@ -189,9 +190,36 @@ package BuildingBlueprints
 				if(str.fitsOnScene())
 					str.castBuild();
 			}
-			var core:Object = BuildingBlueprints.BuildingBlueprints.bezel.gameObjects.GV.ingameCore;
+			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
 			core.renderer2.redrawHighBuildings();
 			core.renderer2.redrawWalls();
+			core.resetAllPNNMatrices();
+			var iLim:int = core.monstersOnScene.length;
+			for(var i:int = 0; i < iLim; i++)
+			{
+				if(core.monstersOnScene[i] == null)
+				{
+					core.monstersOnScene.splice(i,1);
+					i--;
+					iLim--;
+				}
+				else
+				{
+					core.monstersOnScene[i].getNextPatrolSector();
+				}
+			}
+			iLim = core.orblets.length;
+			for(i = 0; i < iLim; i++)
+			{
+				var orblet:Object = core.orblets[i];
+				var orbletClassName:String = 'com.giab.games.gcfw.steam.entity.Orblet';
+				var ST_DROPPED:String = 'ST_DROPPED';
+				var Orblet:Class = getDefinitionByName(orbletClassName) as Class;
+				if(orblet.status == Orblet[ST_DROPPED])
+				{
+					orblet.getNextPatrolSector();
+				}
+			}
 		}
 		
 		public function toString(): String

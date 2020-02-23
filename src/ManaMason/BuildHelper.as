@@ -1,4 +1,4 @@
-package BuildingBlueprints 
+package ManaMason 
 {
 	/**
 	 * ...
