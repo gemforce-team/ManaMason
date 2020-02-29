@@ -8,6 +8,8 @@ It allows you to quickly place arbitrary groups of structures, spending mana acc
 ![Like so](https://i.imgur.com/pSykXwo.png)
 ![Another example](https://i.imgur.com/T5cqKv6.png)
 
+Starting with v1.1 you can also specify gems to automatically create and socket into your buildings! This also supports Gemsmith recipes. Check **Detailed features - gem socketing** below for more information!
+
 This is a time saving and QOL mod, exactly the same results can be achieved without it. Mana expenditure stats and achievements should be tracked appropriately, [submit an issue](https://github.com/gemforce-team/ManaMason/issues) if you find that something's off!
 
 
@@ -32,6 +34,8 @@ That folder is referred to as **ManaMason folder** in this readme.
 * The blueprints are loaded from a `blueprints` folder in your ManaMason folder, you can have as many as you need and switch between them with hotkeys. 
 
 * Only buildings that you have unlocked (either have the skill or allowed in your current trial) are placeable, no cheating!
+
+* You can specify gems to be socketed into your buildings
 
 * Press Ctrl + `R` to **reload your blueprints**.
 
@@ -75,20 +79,49 @@ Expected blueprint format is:
 
 * One line per line of game tiles
 
-An example blueprint will be generated in the `blueprints` folder on first launch, another example below:
+* The blueprint may be followed by lines describing gems to be socketed into your buildings. See below for the format.
+
+
+**Gem section should be structured as follows:**
+```
+Gems:
+Id=[y|yellow,o|orange,r|red,p|purple,g|green,b|blue] grade [targetPriorityId] [rangePercentage]
+Id=[y|yellow,o|orange,r|red,p|purple,g|green,b|blue] gs grade recipeName [targetPriorityId] [rangePercentage]
+Id=[inv|inventory] inventorySlot [targetPriorityId] [rangePercentage]
+```
+
+An example blueprint will be generated in the `blueprints` folder on first launch, another example (including gems) below:
 ```
 aaaaaa--
-aaaaaaww
+010201ww
 --rr----
---rr----
+--03----
 aaaaaaww
 aaaaaa--
 aattaa--
-aattaa--
+aa04aa--
+Gems:
+01=y,gs,11c,0,2,0.1
+02=red,4,3
+03=inv,0
+04=inventory,1,4,0.1
+```
+TargetPriorityIds:
+```
+Nearest to orb = 0;   
+Swarmlings = 1;
+Giants = 2;
+Random = 3;
+Structure \ Least affected by specials = 4;
+Highest banishment cost \ Special = 5;
+Shielded \ Highest armor = 6;
+Least hit points = 7;
 ```
 Which results in
+![Before](https://i.imgur.com/oXw4rbA.jpg)
+![After](https://i.imgur.com/UGqFqTE.jpg)
 
-![Example blueprint ghost](https://i.imgur.com/pSykXwo.png)
+Notice the conjured gems \ gems moved from the inventory.
 
 
 ## Hotkeys
