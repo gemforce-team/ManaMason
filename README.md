@@ -8,7 +8,7 @@ It allows you to quickly place arbitrary groups of structures, spending mana acc
 ![Like so](https://i.imgur.com/pSykXwo.png)
 ![Another example](https://i.imgur.com/T5cqKv6.png)
 
-Starting with v1.1 you can also specify gems to automatically create and socket into your buildings! This also supports Gemsmith recipes. Check **Detailed features - gem socketing** below for more information!
+Starting with v1.1 you can also specify gems to automatically create and socket into your buildings! This also supports Gemsmith recipes. Check **Detailed features** below for more information!
 
 This is a time saving and QOL mod, exactly the same results can be achieved without it. Mana expenditure stats and achievements should be tracked appropriately, [submit an issue](https://github.com/gemforce-team/ManaMason/issues) if you find that something's off!
 
