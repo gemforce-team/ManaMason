@@ -29,11 +29,13 @@ package ManaMason
 				var gs:Object = ManaMason.ManaMason.bezel.getModByName("Gemsmith");
 				if (gs == null)
 					return null;
-				if(gs.hasOwnProperty("conjnureGem"))
+				try{
 					gem = gs.conjureGem(gs.getRecipeByName(template.gemsmithRecipeName), template.gemType, template.gemGrade);
-				else
+				}
+				catch (e:Error)
 				{
-					ManaMason.ManaMason.logger.log("CreateGemFromTemplate", "Gemsmith doesn't have a conjureGem method, it's probably outdated! Skipping gem!");
+					ManaMason.ManaMason.logger.log("CreateGemFromTemplate", "Caught error when conjuring gem! Your gemsmith is probably the wrong version, skipping gem.");
+					ManaMason.ManaMason.logger.log("CreateGemFromTemplate", e.message);
 					gem = null;
 				}
 				if (gem == null)
