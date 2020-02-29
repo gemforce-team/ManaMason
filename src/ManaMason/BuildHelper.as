@@ -29,7 +29,13 @@ package ManaMason
 				var gs:Object = ManaMason.ManaMason.bezel.getModByName("Gemsmith");
 				if (gs == null)
 					return null;
-				gem = gs.conjureGem(gs.getRecipeByName(template.gemsmithRecipeName), template.gemType, template.gemGrade);
+				if(gs.hasOwnProperty("conjnureGem"))
+					gem = gs.conjureGem(gs.getRecipeByName(template.gemsmithRecipeName), template.gemType, template.gemGrade);
+				else
+				{
+					ManaMason.ManaMason.logger.log("CreateGemFromTemplate", "Gemsmith doesn't have a conjureGem method, it's probably outdated! Skipping gem!");
+					gem = null;
+				}
 				if (gem == null)
 					return null;
 			}
