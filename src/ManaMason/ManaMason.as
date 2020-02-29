@@ -14,9 +14,9 @@ package ManaMason
 	
 	public class ManaMason extends MovieClip
 	{
-		public const VERSION:String = "1.0";
-		public const GAME_VERSION:String = "1.0.20c";
-		public const BEZEL_VERSION:String = "0.1.0";
+		public const VERSION:String = "1.1";
+		public const GAME_VERSION:String = "1.0.21";
+		public const BEZEL_VERSION:String = "0.2.0";
 		public const MOD_NAME:String = "BuildingBlueprints";
 		
 		internal var gameObjects:Object;
@@ -29,7 +29,7 @@ package ManaMason
 		internal var prefs:Object;/*Prefs*/
 		
 		// Mod loader object
-		internal static var bezel:Object;
+		public static var bezel:Object;
 		internal static var logger:Object;
 		internal static var storage:File;
 		

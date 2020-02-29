@@ -14,6 +14,7 @@ package ManaMason
 	{
 		private var structureGrid:Array;
 		public var structures:Array;
+		public var gemTemplates:Object;
 		private static var buildHelperBitmaps:Object;
 		private static var allowedSymbols:Array = ["-", "a", "t", "w", "p", "l", "r"];
 		
@@ -29,36 +30,30 @@ package ManaMason
 		{
 			this.structureGrid = new Array();
 			this.structures = new Array();
+			this.gemTemplates = new Object();
 		}
 		
 		public static function fromFile(filePath:String): Blueprint
 		{
-			var res:Blueprint = new Blueprint();
+			var result:Blueprint = new Blueprint();
 			var stream:FileStream = new FileStream();
 			try
 			{
 				stream.open(new File(filePath), FileMode.READ);
 				var recipe:String = stream.readUTFBytes(stream.bytesAvailable);
-				//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Recipe: " + recipe);
-				var rows:Array = recipe.split("\r\n");
-				//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Split into " + rows.length + " rows");
+				stream.close();
+				var parts:Array = recipe.split("Gems:"+File.lineEnding);
+				//ManaMason.ManaMason.logger.log("fromFile", parts[0]);
+				//ManaMason.ManaMason.logger.log("fromFile", parts[1]);
+				var grid:Array = parts[0].split(File.lineEnding);
+				//ManaMason.ManaMason.logger.log("fromFile", "Split into " + grid.length + " rows");
 				
-				for (var c:int = 0; c < rows[0].length; c++)
-				{
-					for (var r:int = 0; r < rows.length; r++)
-					{
-						var char:String = rows[r].charAt(c);
-						//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Row\t" + rows[r] + "; Looking at symbol " + r + ";" + c + " : " + char);
-						if (allowedSymbols.indexOf(char) != -1)
-						{
-							//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Setting " + char);
-							//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Pushing a new structure " + char + " at " + r + ";" + c);
-							res.setStructureGridSlot(c, r, new Structure(char, c, r));
-						}
-						//BuildingBlueprints.BuildingBlueprints.logger.log("fromFile", "Done processing symbol: " + r + ";" + c);
-					}
-				}
-				return res;
+				if (parts.length > 1)
+					parseGemTemplates(parts[1].split(File.lineEnding), result);
+			
+				parseBlueprintGrid(grid, result);
+				
+				return result;
 			}
 			catch (e:Error)
 			{
@@ -67,6 +62,179 @@ package ManaMason
 				ManaMason.ManaMason.logger.log("fromFile", e.getStackTrace());
 			}
 			return emptyBlueprint;
+		}
+		
+		private static function parseBlueprintGrid(grid:Array, res:Blueprint): Blueprint
+		{
+			for (var c:int = 0; c < grid[0].length; c++)
+			{
+				for (var r:int = 0; r < grid.length; r++)
+				{
+					var char:String = grid[r].charAt(c);
+					//ManaMason.ManaMason.logger.log("fromFile", "Row\t" + rows[r] + "; Looking at symbol " + r + ";" + c + " : " + char);
+					if (allowedSymbols.indexOf(char) != -1)
+					{
+						if (res.structureGrid[c] != undefined)
+						{
+							if (res.structureGrid[c][r] != undefined)
+								continue;
+						}
+						//ManaMason.ManaMason.logger.log("fromFile", "Setting " + char);
+						//ManaMason.ManaMason.logger.log("fromFile", "Pushing a new structure " + char + " at " + r + ";" + c);
+						var structure:Structure = StructureFactory.CreateStructure(char, c, r);
+						res.setStructureGridSlot(c, r, structure);
+						if (structure.size == 2)
+						{
+							if (grid[r + 1] != undefined)
+							{
+								var gemId:String = grid[r + 1].charAt(c) + grid[r + 1].charAt(c + 1);
+								structure.gemTemplate = res.gemTemplates[gemId] || null;
+							}
+						}
+					}
+					//ManaMason.ManaMason.logger.log("fromFile", "Done processing symbol: " + r + ";" + c);
+				}
+			}
+			return res;
+		}
+		
+		private static function parseGemTemplates(lines:Array, res:Blueprint): Blueprint
+		{
+			for each(var template:String in lines)
+			{
+				var gem:FakeGem = new FakeGem(-1, 0);
+				var parts:Array = template.split("=");
+				var props:Array = parts[1].split(",");
+				res.gemTemplates[parts[0]] = applyProps(gem, props);
+			}
+			return res;
+		}
+		
+		private static function applyProps(gem:FakeGem, props:Array): FakeGem
+		{
+			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
+			try
+			{
+				switch (props[0]) 
+				{
+					case "y":
+					case "yellow":
+						if (!core.arrIsSpellBtnVisible[6])
+							return null;
+						gem.gemType = 0;
+						break;
+					case "o":
+					case "orange":
+						if (!core.arrIsSpellBtnVisible[7])
+							return null;
+						gem.gemType = 1;
+						break;
+					case "r":
+					case "red":
+						if (!core.arrIsSpellBtnVisible[8])
+							return null;
+						gem.gemType = 2;
+						break;
+					case "p":
+					case "purple":
+						if (!core.arrIsSpellBtnVisible[9])
+							return null;
+						gem.gemType = 3;
+						break;
+					case "g":
+					case "green":
+						if (!core.arrIsSpellBtnVisible[10])
+							return null;
+						gem.gemType = 4;
+						break;
+					case "b":
+					case "blue":
+						if (!core.arrIsSpellBtnVisible[11])
+							return null;
+						gem.gemType = 5;
+						break;
+					case "inv":
+					case "inventory":
+						gem.gemType = -1;
+						gem.fromInventory = true;
+						setGemInventorySlot(gem, parseInt(props[1]));
+						if (gem.inventorySlot == -1)
+							return null;
+						if(props.length >= 3)
+							setGemTargetPriority(gem, parseInt(props[2]));
+						if(props.length >= 4)
+							setGemRange(gem, parseFloat(props[3]));
+						return gem;
+						break;
+					default:
+						return null;
+				}
+				
+				if (props[1] == "gs" || props[1] == "gemsmith")
+				{
+					gem.usesGemsmith = true;
+					gem.gemsmithRecipeName = props[2];
+					setGemGrade(gem, parseInt(props[3]));
+					if (isNaN(gem.gemGrade))
+						return null;
+					if (props.length >= 5)
+						setGemTargetPriority(gem, parseInt(props[4]));
+					if(props.length >= 6)
+						setGemRange(gem, parseFloat(props[5]));
+					return gem;
+				}
+				else
+				{
+					setGemGrade(gem, parseInt(props[1]));
+					if (isNaN(gem.gemGrade))
+						return null;
+					if (props.length >= 3)
+						setGemTargetPriority(gem, parseInt(props[2]));
+					if(props.length >= 4)
+						setGemRange(gem, parseFloat(props[3]));
+					return gem;
+				}
+			}
+			catch (e:Error)
+			{
+				ManaMason.ManaMason.logger.log("applyProps", "Caught an error while parsing a gem's props!");
+				ManaMason.ManaMason.logger.log("applyProps", e.message);
+				return null;
+			}
+			return null;
+		}
+		
+		private static function setGemTargetPriority(gem:FakeGem, tpId:int): void
+		{
+			if (!isNaN(tpId) && tpId >= 0 && tpId <= 7)
+				gem.targetPriority = tpId;
+			else
+				gem.targetPriority = 0;
+		}
+		
+		private static function setGemInventorySlot(gem:FakeGem, slot:int): void
+		{
+			if (!isNaN(slot) && slot >= 0 && slot <= 8)
+				gem.inventorySlot = slot;
+			else
+				gem.inventorySlot = -1;
+		}
+		
+		private static function setGemGrade(gem:FakeGem, grade:int): void
+		{
+			if (!isNaN(grade) && grade >= 0)
+				gem.gemGrade = grade;
+			else
+				gem.gemGrade = NaN;
+		}
+		
+		private static function setGemRange(gem:FakeGem, rangeMulti:Number): void
+		{
+			if (!isNaN(rangeMulti) && rangeMulti >= 0.05 && rangeMulti <= 1)
+			{
+				//ManaMason.ManaMason.logger.log("applyProps", "Setting gem range multi to " + rangeMulti.toString());
+				gem.rangeMultiplier = rangeMulti;
+			}
 		}
 		
 		private function setStructureGridSlot(row:int, column:int, value:Structure): void
@@ -90,7 +258,7 @@ package ManaMason
 				this.structureGrid[row+1][column] = value;
 				this.structureGrid[row+1][column+1] = value;
 			}
-			//BuildingBlueprints.BuildingBlueprints.logger.log("setStructureGridSlot", "Pushed a new structure " + value.toString());
+			//ManaMason.ManaMason.logger.log("setStructureGridSlot", "Pushed a new structure " + value.toString());
 		}
 		
 		private static function createTestBlueprint(): Blueprint
@@ -130,7 +298,7 @@ package ManaMason
 		
 		public function updateStructureCoords(mouseX:Number, mouseY:Number): Array
 		{
-			//BuildingBlueprints.BuildingBlueprints.logger.log("updateStructureCoords", "Updating...");
+			//ManaMason.ManaMason.logger.log("updateStructureCoords", "Updating...");
 			for each(var element:Structure in this.structures)
 			{
 				element.setBuildingCoords(mouseX, mouseY);
@@ -144,9 +312,9 @@ package ManaMason
 		{
 			for each (var struct:Structure in this.structures)
 			{
-				//BuildingBlueprints.BuildingBlueprints.logger.log("flipHorizontal", "Flipping..." + struct.toString());
+				//ManaMason.ManaMason.logger.log("flipHorizontal", "Flipping..." + struct.toString());
 				struct.flipHorizontal(this.structureGrid[0].length);
-				//BuildingBlueprints.BuildingBlueprints.logger.log("flipHorizontal", "Flipped..." + struct.toString());
+				//ManaMason.ManaMason.logger.log("flipHorizontal", "Flipped..." + struct.toString());
 			}
 			for each (var row:Array in this.structureGrid)
 			{
@@ -158,9 +326,9 @@ package ManaMason
 		{
 			for each (var struct:Structure in this.structures)
 			{
-				//BuildingBlueprints.BuildingBlueprints.logger.log("flipVertical", "Flipping..." + struct.toString());
+				//ManaMason.ManaMason.logger.log("flipVertical", "Flipping..." + struct.toString());
 				struct.flipVertical(this.structureGrid.length);
-				//BuildingBlueprints.BuildingBlueprints.logger.log("flipVertical", "Flipped..." + struct.toString());
+				//ManaMason.ManaMason.logger.log("flipVertical", "Flipped..." + struct.toString());
 			}
 			this.structureGrid.reverse();
 		}
@@ -189,8 +357,10 @@ package ManaMason
 			
 			for each (var str:Structure in this.structures)
 			{
-				if(str.fitsOnScene() && core.arrIsSpellBtnVisible[str.spellButtonIndex])
+				if (str.fitsOnScene() && core.arrIsSpellBtnVisible[str.spellButtonIndex])
+				{
 					str.castBuild();
+				}
 			}
 			core.renderer2.redrawHighBuildings();
 			core.renderer2.redrawWalls();
