@@ -20,6 +20,7 @@ https://github.com/gemforce-team/ManaMason/blob/master/Changelog.txt
 ## Known issues
 * Rotating\flipping the blueprints is a bit weird
 * Hotkeys aren't configurable
+* Line endings are expected to be system-appropriate (\r\n for Windows, \n for Linux and MacOS)
 
 
 # Mod files
