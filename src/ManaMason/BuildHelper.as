@@ -29,6 +29,8 @@ package ManaMason
 				var gs:Object = ManaMason.ManaMason.bezel.getModByName("Gemsmith");
 				if (gs == null)
 					return null;
+				if (!core.arrIsSpellBtnVisible[template.gemType+6])
+					return null;
 				try{
 					gem = gs.conjureGem(gs.getRecipeByName(template.gemsmithRecipeName), template.gemType, template.gemGrade);
 				}
@@ -50,6 +52,8 @@ package ManaMason
 			}
 			else
 			{
+				if (!core.arrIsSpellBtnVisible[template.gemType+6])
+					return null;
 				if (core.getMana() < core.gemCreatingBaseManaCosts[template.gemGrade])
 					return null;
 				

@@ -119,38 +119,26 @@ package ManaMason
 				{
 					case "y":
 					case "yellow":
-						if (!core.arrIsSpellBtnVisible[6])
-							return null;
 						gem.gemType = 0;
 						break;
 					case "o":
 					case "orange":
-						if (!core.arrIsSpellBtnVisible[7])
-							return null;
 						gem.gemType = 1;
 						break;
 					case "r":
 					case "red":
-						if (!core.arrIsSpellBtnVisible[8])
-							return null;
 						gem.gemType = 2;
 						break;
 					case "p":
 					case "purple":
-						if (!core.arrIsSpellBtnVisible[9])
-							return null;
 						gem.gemType = 3;
 						break;
 					case "g":
 					case "green":
-						if (!core.arrIsSpellBtnVisible[10])
-							return null;
 						gem.gemType = 4;
 						break;
 					case "b":
 					case "blue":
-						if (!core.arrIsSpellBtnVisible[11])
-							return null;
 						gem.gemType = 5;
 						break;
 					case "inv":
