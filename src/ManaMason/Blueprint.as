@@ -102,6 +102,8 @@ package ManaMason
 		{
 			for each(var template:String in lines)
 			{
+				if (!template)
+					continue;
 				var gem:FakeGem = new FakeGem(-1, 0);
 				var parts:Array = template.split("=");
 				var props:Array = parts[1].split(",");
