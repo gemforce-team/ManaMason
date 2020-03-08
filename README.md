@@ -124,6 +124,12 @@ Which results in
 
 Notice the conjured gems \ gems moved from the inventory.
 
+**Pylon target priority is set in the blueprint part, instead of a gem id you specify the target priority id directly**
+```
+pppppp
+0102pp
+```
+So the first two have a custom target priority, the last one is set to default, these are not gem ids since pylons can't hold gems. You can't adjust their range either so that's out as well.
 
 ## Hotkeys
 By default ManaMason's hotkeys are:

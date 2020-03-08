@@ -9,6 +9,8 @@ package ManaMason.Structures
 	
 	public class Pylon extends Structure
 	{
+		public var targetPriority:int;
+		
 		public function Pylon(bpIX:int, bpIY:int) 
 		{
 			var BUILDING_TYPE:Object = ManaMason.ManaMason.bezel.gameObjects.constants.buildingType;
@@ -20,6 +22,7 @@ package ManaMason.Structures
 			
 			this.buildingType = BUILDING_TYPE.PYLON;
 			this.spellButtonIndex = 17;
+			this.targetPriority = 0;
 		}
 		
 		public override function castBuild(spendMana:Boolean = true, trackStats:Boolean = false): void
@@ -43,6 +46,7 @@ package ManaMason.Structures
 			}
 			else return;
 			
+			core.buildingAreaMatrix[buildingGridY][buildingGridX].targetPriority = this.targetPriority;
 			if (spendMana)
 			{
 				core.changeMana( -this.getCurrentManaCost(), false, true);

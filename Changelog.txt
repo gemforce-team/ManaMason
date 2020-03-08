@@ -3,3 +3,11 @@
 01.03.2020 v1.1 for 1.0.21
 	Added gem socketing!
 	Refactored the Structure code.
+01.03.2020 v1.2 for 1.0.21
+	Fixed an error when loading blueprints on game load.
+	Added additional checks for GemSmith.
+08.02.2020 v1.3 for 1.0.21
+	You can now specify target priority for pylons. Just put a respective number in the blueprint instead of a gem id.
+	Blank lines shouldn't error anymore.
+	Conjured gems are now properly added to the game's list (so specters can target them etc).
+	Gem ids are now required to be integers.

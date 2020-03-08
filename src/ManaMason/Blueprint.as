@@ -5,6 +5,7 @@ package ManaMason
 	 * @author Hellrage
 	 */
 	
+	import ManaMason.Structures.Pylon;
 	import flash.filesystem.*;
 	import flash.utils.*;
 	import flash.display.Bitmap;
@@ -87,8 +88,18 @@ package ManaMason
 						{
 							if (grid[r + 1] != undefined)
 							{
-								var gemId:String = grid[r + 1].charAt(c) + grid[r + 1].charAt(c + 1);
-								structure.gemTemplate = res.gemTemplates[gemId] || null;
+								var gemIdString:String = grid[r + 1].charAt(c) + grid[r + 1].charAt(c + 1);
+								var gemId:int = parseInt(gemIdString);
+								if (!isNaN(gemId))
+								{
+									if (structure.type == "p")
+									{
+										var pylon:Pylon = structure as Pylon;
+										pylon.targetPriority = gemId;
+									}
+									else
+										structure.gemTemplate = res.gemTemplates[gemId] || null;
+								}
 							}
 						}
 					}
@@ -102,10 +113,15 @@ package ManaMason
 		{
 			for each(var template:String in lines)
 			{
+				if (template.length < 3)
+					continue;
 				var gem:FakeGem = new FakeGem(-1, 0);
 				var parts:Array = template.split("=");
+				var gemId:int = parseInt(parts[0]);
+				if (isNaN(gemId))
+					continue;
 				var props:Array = parts[1].split(",");
-				res.gemTemplates[parts[0]] = applyProps(gem, props);
+				res.gemTemplates[gemId] = applyProps(gem, props);
 			}
 			return res;
 		}

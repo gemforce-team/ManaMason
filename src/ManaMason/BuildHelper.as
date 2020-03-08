@@ -49,6 +49,9 @@ package ManaMason
 				core.inventorySlots[template.inventorySlot] = null;
 				if (gem == null)
 					return null;
+				var index:int = core.gems.indexOf(gem);
+				if (index != -1)
+					core.gems.splice(index,1)
 			}
 			else
 			{
@@ -73,6 +76,8 @@ package ManaMason
 			{
 				gem.sd5_EnhancedOrTrapOrLantern.range.s(Math.min(gem.sd5_EnhancedOrTrapOrLantern.range.g(),170));
 			}
+			
+			core.gems.push(gem);
 			return gem;
 		}
 	}

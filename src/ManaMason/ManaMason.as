@@ -14,7 +14,7 @@ package ManaMason
 	
 	public class ManaMason extends MovieClip
 	{
-		public const VERSION:String = "1.2";
+		public const VERSION:String = "1.3";
 		public const GAME_VERSION:String = "1.0.21";
 		public const BEZEL_VERSION:String = "0.2.0";
 		public const MOD_NAME:String = "ManaMason";
