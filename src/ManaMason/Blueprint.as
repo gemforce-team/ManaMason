@@ -387,7 +387,7 @@ package ManaMason
 			for(i = 0; i < iLim; i++)
 			{
 				var orblet:Object = core.orblets[i];
-				var orbletClassName:String = 'com.giab.games.gcfw.steam.entity.Orblet';
+				var orbletClassName:String = 'com.giab.games.gcfw.entity.Orblet';
 				var ST_DROPPED:String = 'ST_DROPPED';
 				var Orblet:Class = getDefinitionByName(orbletClassName) as Class;
 				if(orblet.status == Orblet[ST_DROPPED])

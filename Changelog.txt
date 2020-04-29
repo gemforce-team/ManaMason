@@ -11,3 +11,5 @@
 	Blank lines shouldn't error anymore.
 	Conjured gems are now properly added to the game's list (so specters can target them etc).
 	Gem ids are now required to be integers.
+29.04.2020 v1.4 for 1.1.0a
+	Updated for the latest game version.
