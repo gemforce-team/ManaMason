@@ -22,11 +22,14 @@ package ManaMason.Structures
 			this.yOffset = 0;
 		}
 		
-		public override function castBuild(spendMana:Boolean = true, trackStats:Boolean = false): void
+		public override function castBuild(buildOnPath:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
 		{
 			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
 			
 			if (spendMana && core.getMana() < this.getCurrentManaCost())
+				return;
+				
+			if (!buildOnPath && core.groundMatrix[buildingGridY][buildingGridX] == "#")
 				return;
 				
 			if (core.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType))

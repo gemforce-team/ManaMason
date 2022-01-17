@@ -13,3 +13,5 @@
 	Gem ids are now required to be integers.
 29.04.2020 v1.4 for 1.1.0a
 	Updated for the latest game version.
+17.01.2022 v1.5
+	Holding shift when building will now prevent placement on paths.

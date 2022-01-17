@@ -23,11 +23,18 @@ package ManaMason.Structures
 			this.spellButtonIndex = 16;
 		}
 		
-		public override function castBuild(spendMana:Boolean = true, trackStats:Boolean = false): void
+		public override function castBuild(buildOnPath:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
 		{
 			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
 			
 			if (spendMana && core.getMana() < this.getCurrentManaCost())
+				return;
+				
+			if (!buildOnPath && (
+				core.groundMatrix[buildingGridY][buildingGridX] == "#" ||
+				core.groundMatrix[buildingGridY+1][buildingGridX] == "#" ||
+				core.groundMatrix[buildingGridY][buildingGridX+1] == "#" ||
+				core.groundMatrix[buildingGridY+1][buildingGridX+1] == "#"))
 				return;
 				
 			if (core.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType))

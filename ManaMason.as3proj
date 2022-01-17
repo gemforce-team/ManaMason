@@ -4,7 +4,7 @@
   <output>
     <movie outputType="Application" />
     <movie input="" />
-    <movie path="C:\Games\Steam\steamapps\common\GemCraft Frostborn Wrath\Mods\ManaMason-1.4-for-1.1.0a.swf" />
+    <movie path="D:\Games\Steam\steamapps\common\GemCraft Frostborn Wrath\Mods\ManaMason-1.5.swf" />
     <movie fps="30" />
     <movie width="1920" />
     <movie height="1080" />

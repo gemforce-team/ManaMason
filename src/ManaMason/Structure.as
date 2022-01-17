@@ -73,7 +73,7 @@ package ManaMason
 			this.blueprintIndexY = temp;
 		}
 		
-		public function castBuild(spendMana:Boolean = true, trackStats:Boolean = false): void
+		public function castBuild(buidOnPath:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
 		{
 			this.insertGem(BuildHelper.CreateGemFromTemplate(this.gemTemplate));
 		}

@@ -355,7 +355,7 @@ package ManaMason
 			flipVertical();
 		}
 		
-		public function castBuild(): void
+		public function castBuild(buildOnPath:Boolean): void
 		{
 			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
 			
@@ -363,7 +363,7 @@ package ManaMason
 			{
 				if (str.fitsOnScene() && core.arrIsSpellBtnVisible[str.spellButtonIndex])
 				{
-					str.castBuild();
+					str.castBuild(buildOnPath);
 				}
 			}
 			core.renderer2.redrawHighBuildings();

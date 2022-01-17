@@ -36,9 +36,11 @@ That folder is referred to as **ManaMason folder** in this readme.
 
 * Only buildings that you have unlocked (either have the skill or allowed in your current trial) are placeable, no cheating!
 
-* You can specify gems to be socketed into your buildings
+* You can specify gems to be socketed into your buildings.
 
 * Press Ctrl + `R` to **reload your blueprints**.
+
+* Hold Shift when clicking to prevent building on paths. This is helpful if you make a blueprint that spams walls to prevent beacon spawning on the whole screen, then shift-click it to only place walls on the ground.
 
 * ManaMason keeps a log of the last session in `%AppData%\com.giab.games.gcfw.steam\Local Store\Bezel Mod Loader\Bezel_log.log`. If you see a floating message saying that an error has occured, there might be more information in there.
 

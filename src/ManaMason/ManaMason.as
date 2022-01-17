@@ -40,6 +40,7 @@ package ManaMason
 		private var currentBlueprintIndex:int;
 		
 		private var buildingMode:Boolean;
+		private var shiftKeyPressed:Boolean;
 		
 		public function ManaMason() 
 		{
@@ -59,6 +60,7 @@ package ManaMason
 			storage = File.applicationStorageDirectory.resolvePath("ManaMason");
 			
 			this.blueprints = new Array();
+			this.shiftKeyPressed = false;
 			initActiveBitmaps();
 			
 			initBuildingHelpers();
@@ -256,6 +258,7 @@ package ManaMason
 		public function eh_interceptKeyboardEvent(e:Object): void
 		{
 			var pE:KeyboardEvent = e.eventArgs.event;
+			this.shiftKeyPressed = pE.shiftKey;
 			
 			if (pE.keyCode == 45)
 			{
@@ -304,16 +307,19 @@ package ManaMason
 				else if (pE.keyCode == 86)
 				{
 					this.selectedBlueprint.flipVertical();
+					e.eventArgs.continueDefault = false;
 					this.eh_ingamePreRenderInfoPanel(null);
 				}
 				else if (pE.keyCode == 70)
 				{
 					this.selectedBlueprint.flipHorizontal();
+					e.eventArgs.continueDefault = false;
 					this.eh_ingamePreRenderInfoPanel(null);
 				}
 				else if (pE.keyCode == 82)
 				{
 					this.selectedBlueprint.rotate();
+					e.eventArgs.continueDefault = false;
 					this.eh_ingamePreRenderInfoPanel(null);
 				}
 			}
@@ -326,7 +332,7 @@ package ManaMason
 			
 			if (this.buildingMode)
 			{
-				this.selectedBlueprint.castBuild();
+				this.selectedBlueprint.castBuild(!this.shiftKeyPressed);
 				e.eventArgs.continueDefault = false;	
 			}
 			
