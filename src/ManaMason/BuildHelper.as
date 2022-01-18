@@ -20,7 +20,7 @@ package ManaMason
 		public static function CreateGemFromTemplate(template:FakeGem): Object
 		{
 			if (template == null)
-				return template;
+				return null;
 			
 			var gem:Object = null;
 			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;

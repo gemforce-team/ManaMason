@@ -15,3 +15,5 @@
 	Updated for the latest game version.
 17.01.2022 v1.5
 	Holding shift when building will now prevent placement on paths.
+19.01.2022 v1.6
+	Added capture mode. Press Ctrl+Insert to begin, then click the top left and bottom right corners of the rectangle you'd like to capture. ManaMason witll grab the buildings and generate a blueprint. Reload the blueprints to use the newly made one immediately.

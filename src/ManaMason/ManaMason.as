@@ -5,6 +5,7 @@ package ManaMason
 	 * @author Hellrage
 	 */
 	
+	import air.update.events.StatusFileUpdateErrorEvent;
 	import flash.display.Bitmap;
 	import flash.display.MovieClip;
 	import flash.filesystem.*;
@@ -32,6 +33,7 @@ package ManaMason
 		public static var bezel:Object;
 		internal static var logger:Object;
 		internal static var storage:File;
+		internal static var structureClasses: Object;
 		
 		private var blueprints:Array;
 		private var activeBitmaps:Object;
@@ -40,6 +42,8 @@ package ManaMason
 		private var currentBlueprintIndex:int;
 		
 		private var buildingMode:Boolean;
+		private var captureMode:Boolean;
+		private var captureCorners: Object;
 		private var shiftKeyPressed:Boolean;
 		
 		public function ManaMason() 
@@ -61,6 +65,19 @@ package ManaMason
 			
 			this.blueprints = new Array();
 			this.shiftKeyPressed = false;
+			this.captureMode = false;
+			this.captureCorners = new Object();
+			captureCorners[0] = null;
+			captureCorners[1] = null;
+			
+			structureClasses = new Object();
+			structureClasses['w'] = getDefinitionByName('com.giab.games.gcfw.entity.Wall') as Class;
+			structureClasses['t'] = getDefinitionByName('com.giab.games.gcfw.entity.Tower') as Class;
+			structureClasses['a'] = getDefinitionByName('com.giab.games.gcfw.entity.Amplifier') as Class;
+			structureClasses['r'] = getDefinitionByName('com.giab.games.gcfw.entity.Trap') as Class;
+			structureClasses['p'] = getDefinitionByName('com.giab.games.gcfw.entity.Pylon') as Class;
+			structureClasses['l'] = getDefinitionByName('com.giab.games.gcfw.entity.Lantern') as Class;
+			
 			initActiveBitmaps();
 			
 			initBuildingHelpers();
@@ -262,6 +279,21 @@ package ManaMason
 			
 			if (pE.keyCode == 45)
 			{
+				if (pE.ctrlKey)
+				{
+					if (this.captureMode)
+					{
+						exitCaptureMode();
+					}
+					else
+					{
+						this.captureMode = true;
+						GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Click top left and bottom right corners to capture structures!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
+					}
+					e.eventArgs.continueDefault = false;
+					return;
+				}
+				
 				this.buildingMode = !this.buildingMode;
 				if (!this.buildingMode)
 				{
@@ -323,7 +355,6 @@ package ManaMason
 					this.eh_ingamePreRenderInfoPanel(null);
 				}
 			}
-			
 		}
 		
 		public function eh_ingameClickOnScene(e:Object): void
@@ -335,7 +366,31 @@ package ManaMason
 				this.selectedBlueprint.castBuild(!this.shiftKeyPressed);
 				e.eventArgs.continueDefault = false;	
 			}
-			
+			else if (this.captureMode)
+			{
+				var mouseX:Number = this.core.cnt.root.mouseX;
+				var mouseY:Number  = this.core.cnt.root.mouseY;
+				if (mouseX < 50 || mouseX > 50 + 1680 || mouseY < 8 || mouseY > 8 + 1064)
+				{
+					return;
+				}
+					
+				var vX:Number = Math.floor((mouseX - 50) / 28);
+				var vY:Number = Math.floor((mouseY - 8) / 28);
+				
+				if (this.captureCorners[0] == null)
+				{
+					this.captureCorners[0] = [vX, vY];
+
+				}
+				else if (this.captureCorners[1] == null)
+				{
+					this.captureCorners[1] = [vX, vY];
+					tryCaptureFromField();
+					exitCaptureMode();
+				}
+					
+			}
 		}
 		
 		public function eh_ingameRightClickOnScene(e:Object): void
@@ -344,8 +399,63 @@ package ManaMason
 			if (this.buildingMode)
 			{
 				exitBuildingMode();
-				this.buildingMode = false;
 			}
+			
+			if (this.captureMode)
+			{
+				exitCaptureMode();
+			}
+		}
+		
+		private function tryCaptureFromField(): void
+		{
+			var grid:Object = this.core.buildingAreaMatrix;
+			var structureString: String = "";
+			
+			for (var i:int = this.captureCorners[0][1]; i <= this.captureCorners[1][1]; i++) 
+			{
+				for (var j:int = this.captureCorners[0][0]; j <= this.captureCorners[1][0]; j++) 
+				{
+					if (grid[i][j] == null)
+					{
+						structureString += "-";
+						continue;
+					}
+					for (var type:String in structureClasses)
+					{
+						if (grid[i][j] is structureClasses[type]){
+							structureString += type;
+							break;
+						}
+					}
+				}
+				structureString += "\r\n";
+			}
+			exportBlueprintFile(structureString);
+		}
+		
+		private function exportBlueprintFile(bpString: String): void
+		{
+			var blueprintsFolder:File = storage.resolvePath("blueprints");
+			var bpFile:File = blueprintsFolder.resolvePath("capturedBP.txt");
+			var bpWriter:FileStream = new FileStream();
+			try
+			{
+				bpWriter.open(bpFile, FileMode.WRITE);
+				bpWriter.writeUTFBytes(bpString);
+			}
+			catch (err:Error)
+			{
+				logger.log("BPexport", "Error when exporting a BP!" + err.message);
+			}
+		}
+		
+		private function exitCaptureMode(): void
+		{
+			GV.vfxEngine.createFloatingText4(GV.main.mouseX, GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20), "Exiting capture mode!", 16768392, 12, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 12, 0, 1000);
+			this.captureCorners[0] = null;
+			this.captureCorners[1] = null;
+			this.captureMode = false;
 		}
 		
 		public function eh_ingamePreRenderInfoPanel(e:Object): void
@@ -469,6 +579,7 @@ package ManaMason
 			rHUD.removeChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
 			rHUD.removeChild(this.core.cnt.bmpWallPlaceAvailMap);
 			cleanupRetinaHud();
+			this.buildingMode = false;
 		}
 	}
 
