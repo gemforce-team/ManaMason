@@ -28,6 +28,14 @@ package ManaMason.Structures
 		public override function castBuild(buildOnPath:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
 		{
 			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
+			var existingBuilding: Object = core.buildingRegPtMatrix[buildingGridY][buildingGridX];
+			
+			if (existingBuilding is ManaMason.ManaMason.structureClasses['p'])
+			{
+				if (existingBuilding.insertedGem == null)
+					super.castBuild(spendMana, trackStats);
+				return;
+			}
 			
 			if (spendMana && core.getMana() < this.getCurrentManaCost())
 				return;

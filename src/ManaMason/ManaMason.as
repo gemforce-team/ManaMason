@@ -33,7 +33,7 @@ package ManaMason
 		public static var bezel:Object;
 		internal static var logger:Object;
 		internal static var storage:File;
-		internal static var structureClasses: Object;
+		public static var structureClasses: Object;
 		
 		private var blueprints:Array;
 		private var activeBitmaps:Object;
@@ -410,23 +410,26 @@ package ManaMason
 		private function tryCaptureFromField(): void
 		{
 			var grid:Object = this.core.buildingAreaMatrix;
+			var tileProcessed: Boolean = false;
 			var structureString: String = "";
 			
 			for (var i:int = this.captureCorners[0][1]; i <= this.captureCorners[1][1]; i++) 
 			{
 				for (var j:int = this.captureCorners[0][0]; j <= this.captureCorners[1][0]; j++) 
 				{
-					if (grid[i][j] == null)
-					{
-						structureString += "-";
-						continue;
-					}
+					tileProcessed = false;
 					for (var type:String in structureClasses)
 					{
 						if (grid[i][j] is structureClasses[type]){
 							structureString += type;
+							tileProcessed = true;
 							break;
 						}
+					}
+					
+					if (!tileProcessed)
+					{
+						structureString += "-";
 					}
 				}
 				structureString += "\r\n";

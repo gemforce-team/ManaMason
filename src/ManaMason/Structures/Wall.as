@@ -5,6 +5,7 @@ package ManaMason.Structures
 	 * @author Hellrage
 	 */
 	
+	import ManaMason.ManaMason;
 	import ManaMason.Structure;
 	import flash.utils.getDefinitionByName;
 	
@@ -38,7 +39,7 @@ package ManaMason.Structures
 				{
 					if (core.calculator.isNewWallBlocking(buildingGridX, buildingGridX, buildingGridY, buildingGridY))// (this.buildingX, this.buildingX, this.buildingY, this.buildingY))
 						return;
-					if(!(core.buildingAreaMatrix[buildingGridY][buildingGridX] is (getDefinitionByName('com.giab.games.gcfw.entity.Wall') as Class)))
+					if(!(core.buildingAreaMatrix[buildingGridY][buildingGridX] is ManaMason.ManaMason.structureClasses['w']))
 					{
 						core.creator.buildWall(buildingGridX, buildingGridY);
 						core.stats.spentManaOnWalls += Math.max(0, this.getCurrentManaCost());
