@@ -317,7 +317,7 @@ package ManaMason
 			for each (var struct:Structure in this.structures)
 			{
 				//ManaMason.ManaMason.logger.log("flipHorizontal", "Flipping..." + struct.toString());
-				struct.flipHorizontal(this.structureGrid[0].length);
+				struct.flipHorizontal(this.structureGrid.length);
 				//ManaMason.ManaMason.logger.log("flipHorizontal", "Flipped..." + struct.toString());
 			}
 			for each (var row:Array in this.structureGrid)
@@ -331,7 +331,7 @@ package ManaMason
 			for each (var struct:Structure in this.structures)
 			{
 				//ManaMason.ManaMason.logger.log("flipVertical", "Flipping..." + struct.toString());
-				struct.flipVertical(this.structureGrid.length);
+				struct.flipVertical(this.structureGrid[0].length);
 				//ManaMason.ManaMason.logger.log("flipVertical", "Flipped..." + struct.toString());
 			}
 			this.structureGrid.reverse();
