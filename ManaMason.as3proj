@@ -56,7 +56,7 @@
   </libraryPaths>
   <!-- External Libraries -->
   <externalLibraryPaths>
-    <element path="src\BezelModLoader.swc" />
+    <element path="D:\Games\Steam\steamapps\common\GemCraft Frostborn Wrath\Mods\BezelModLoader.swc" />
     <element path="src\GCFW.swc" />
   </externalLibraryPaths>
   <!-- Runtime Shared Libraries -->

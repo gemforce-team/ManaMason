@@ -535,7 +535,7 @@ package ManaMason
 			GV.ingameCore.lastZoneYMin = 8 + 28 * vY;
 			GV.ingameCore.lastZoneYMax = 8 + 28 + 28 * vY;
 			
-			var rHUD:Object = GV.ingameCore.cnt.cntRetinaHud;
+			var rHUD:SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
 			if(!rHUD.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
                 rHUD.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
 			//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
@@ -594,7 +594,7 @@ package ManaMason
 		{
 			if (this.captureMode)
 			{
-				var rHUD: Object = GV.ingameCore.cnt.cntRetinaHud;
+				var rHUD: SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
 				crosshair.graphics.clear();
 				crosshair.graphics.lineStyle(2, 0x00FF00, 1);
 				if(this.captureCorners[0] == null) {
@@ -617,22 +617,22 @@ package ManaMason
 		
 		private function cleanupRetinaHud(): void
 		{
-			var rHUD: Object = GV.ingameCore.cnt.cntRetinaHud;
+			var rHUD: SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
 			//ManaMasonMod.logger.log("cleanupRetinaHud", "Cleaning up...");
-			for each (var bitmapType:Object in this.activeBitmaps)
+			for each (var bitmapType: Object in this.activeBitmaps)
 			{
-				for each (var bitmap:Object in bitmapType.bitmaps)
+				for each (var bitmap: Bitmap in bitmapType.bitmaps)
 				{
 					rHUD.removeChild(bitmap);
 				}
 			}
 			
-			for each (var wallMC:Object in this.activeWallHelpers.movieClips)
+			for each (var wallMC: MovieClip in this.activeWallHelpers.movieClips)
 			{
 				rHUD.removeChild(wallMC);
 			}
 			
-			for each(var baseBitmap:Object in BuildHelper.bitmaps)
+			for each(var baseBitmap: Bitmap in BuildHelper.bitmaps)
 			{
 				rHUD.removeChild(baseBitmap);
 			}
