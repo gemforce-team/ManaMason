@@ -4,7 +4,7 @@
   <output>
     <movie outputType="Application" />
     <movie input="" />
-    <movie path="D:\Games\Steam\steamapps\common\GemCraft Frostborn Wrath\Mods\ManaMason-1.5.swf" />
+    <movie path="D:\Games\Steam\steamapps\common\GemCraft Frostborn Wrath\Mods\ManaMason-1.6.swf" />
     <movie fps="30" />
     <movie width="1920" />
     <movie height="1080" />
@@ -56,7 +56,8 @@
   </libraryPaths>
   <!-- External Libraries -->
   <externalLibraryPaths>
-    <!-- example: <element path="..." /> -->
+    <element path="src\BezelModLoader.swc" />
+    <element path="src\GCFW.swc" />
   </externalLibraryPaths>
   <!-- Runtime Shared Libraries -->
   <rslPaths>
@@ -72,7 +73,7 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\ManaMason\ManaMason.as" />
+    <compile path="src\ManaMason\ManaMasonMod.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>
