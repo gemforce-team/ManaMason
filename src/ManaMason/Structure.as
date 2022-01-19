@@ -3,6 +3,8 @@ package ManaMason
 	import adobe.utils.CustomActions;
 	import flash.display.Bitmap;
 	import flash.utils.*;
+	
+	import com.giab.games.gcfw.GV;
 	/**
 	 * ...
 	 * @author Hellrage
@@ -97,8 +99,7 @@ package ManaMason
 		{
 			if (gem == null)
 				return;
-			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
-			core.buildingAreaMatrix[buildingGridY][buildingGridX].insertGem(gem);
+			GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX].insertGem(gem);
 		}
 	}
 

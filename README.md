@@ -34,6 +34,8 @@ That folder is referred to as **ManaMason folder** in this readme.
 
 * The blueprints are loaded from a `blueprints` folder in your ManaMason folder, you can have as many as you need and switch between them with hotkeys. 
 
+* You can also capture the structures that you've already built. Activate capture mode by pressing Ctrl+C and select the area you'd like to copy. A blueprint will be generated in your blueprint folder and added to your loaded blueprints.
+
 * Only buildings that you have unlocked (either have the skill or allowed in your current trial) are placeable, no cheating!
 
 * You can specify gems to be socketed into your buildings.
@@ -136,7 +138,8 @@ So the first two have a custom target priority, the last one is set to default, 
 ## Hotkeys
 By default ManaMason's hotkeys are:
 ```
-Insert - enter\exit building mode
+Ctrl+C - enter\exit capture mode
+Ctrl+V - enter\exit building mode
 PageUp or UpArrow - previous blueprint
 PageDown or DownArrow - next blueprint
 R - rotate blueprint
@@ -144,8 +147,7 @@ F - flip blueprint horizontally
 V - flip blueprint vertically
 Ctrl + R - reload blueprints
 ```
-Rebinding isn't available yet.
-
+These can be rebound using Bezel's hotkey manager, edit Local Store\Bezel Mod Loader\hotkeys.json to change them.
 
 # Bug reports and feedback
 Please submit an issue to [The issue tracker](https://github.com/gemforce-team/ManaMason/issues) if you encounter a bug and there isn't already an open issue about it.

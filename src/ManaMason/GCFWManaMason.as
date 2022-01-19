@@ -5,6 +5,26 @@ package ManaMason
 	 * @author Hellrage
 	 */
 	
+	import Bezel.Events.EventTypes;
+	import Bezel.Events.IngameGemInfoPanelFormedEvent;
+	import Bezel.Events.IngameKeyDownEvent;
+	import Bezel.Utils.Keybind;
+	import Bezel.Utils.SettingManager;
+	import com.giab.common.abstract.SpriteExt;
+	import com.giab.games.gcfw.entity.Amplifier;
+	import com.giab.games.gcfw.entity.Lantern;
+	import com.giab.games.gcfw.entity.Pylon;
+	import com.giab.games.gcfw.entity.Tower;
+	import com.giab.games.gcfw.entity.Trap;
+	import com.giab.games.gcfw.entity.Wall;
+	import flash.display.Shape;
+	
+	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.SB;
+	import com.giab.games.gcfw.ingame.IngameCore;
+	import com.giab.games.gcfw.mcDyn.McInfoPanel;
+	import com.giab.games.gcfw.mcStat.CntIngame;
+	
 	import air.update.events.StatusFileUpdateErrorEvent;
 	import flash.display.Bitmap;
 	import flash.display.MovieClip;
@@ -13,25 +33,8 @@ package ManaMason
 	import flash.globalization.LocaleID;
 	import flash.utils.*;
 	
-	public class ManaMason extends MovieClip
+	public class GCFWManaMason extends MovieClip
 	{
-		public const VERSION:String = "1.4";
-		public const GAME_VERSION:String = "1.1.0a";
-		public const BEZEL_VERSION:String = "0.2.1";
-		public const MOD_NAME:String = "ManaMason";
-		
-		internal var gameObjects:Object;
-		
-		// Game object shortcuts
-		internal var core:Object;/*IngameCore*/
-		internal var cnt:Object;/*CntIngame*/
-		internal var GV:Object;/*GV*/
-		internal var SB:Object;/*SB*/
-		internal var prefs:Object;/*Prefs*/
-		
-		// Mod loader object
-		public static var bezel:Object;
-		internal static var logger:Object;
 		internal static var storage:File;
 		public static var structureClasses: Object;
 		
@@ -46,21 +49,13 @@ package ManaMason
 		private var captureCorners: Object;
 		private var shiftKeyPressed:Boolean;
 		
-		public function ManaMason() 
+		private var crosshair:Shape;
+		
+		private static var settings: SettingManager;
+		
+		public function GCFWManaMason() 
 		{
 			super();
-		}
-		
-		public function bind(modLoader:Object, gameObjects:Object): ManaMason
-		{
-			bezel = modLoader;
-			logger = bezel.getLogger("ManaMason");
-			this.gameObjects = gameObjects;
-			this.core = gameObjects.GV.ingameCore;
-			this.cnt = gameObjects.GV.main.cntScreens.cntIngame;
-			this.SB = gameObjects.SB;
-			this.GV = gameObjects.GV;
-			this.prefs = gameObjects.prefs;
 			storage = File.applicationStorageDirectory.resolvePath("ManaMason");
 			
 			this.blueprints = new Array();
@@ -71,12 +66,19 @@ package ManaMason
 			captureCorners[1] = null;
 			
 			structureClasses = new Object();
-			structureClasses['w'] = getDefinitionByName('com.giab.games.gcfw.entity.Wall') as Class;
-			structureClasses['t'] = getDefinitionByName('com.giab.games.gcfw.entity.Tower') as Class;
-			structureClasses['a'] = getDefinitionByName('com.giab.games.gcfw.entity.Amplifier') as Class;
-			structureClasses['r'] = getDefinitionByName('com.giab.games.gcfw.entity.Trap') as Class;
-			structureClasses['p'] = getDefinitionByName('com.giab.games.gcfw.entity.Pylon') as Class;
-			structureClasses['l'] = getDefinitionByName('com.giab.games.gcfw.entity.Lantern') as Class;
+			structureClasses['w'] = Wall;
+			structureClasses['t'] = Tower;
+			structureClasses['a'] = Amplifier;
+			structureClasses['r'] = Trap;
+			structureClasses['p'] = Pylon;
+			structureClasses['l'] = Lantern;
+			
+			//settings = SettingManager.getManager("ManaMason");
+			//registerDefaultSettings();
+			
+			initCrosshair();
+			
+			registerKeybinds();
 			
 			initActiveBitmaps();
 			
@@ -88,20 +90,40 @@ package ManaMason
 			
 			addEventListeners();
 			
-			logger.log("bind", "ManaMason initialized!");
-			
-			return this;
+			ManaMasonMod.logger.log("bind", "ManaMason initialized!");
+		}
+		
+		private function initCrosshair(): void
+		{
+			crosshair = new Shape();
+		}
+		
+		private function registerDefaultSettings(): void
+		{
+		}
+		
+		private function registerKeybinds(): void
+		{
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Cycle selected blueprint left", new Keybind("page_up"));
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Enter building mode", new Keybind("ctrl+v"));
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Enter capture mode", new Keybind("ctrl+c"));
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Cycle selected blueprint right", new Keybind("page_down"));
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Reload recipes", new Keybind("ctrl+r"));
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Flip blueprint horizontally", new Keybind("f"));
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Flip blueprint vertically", new Keybind("v"));
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Rotate blueprint", new Keybind("r"));
+			// GemsmithMod.bezel.keybindManager.registerHotkey("Gemsmith: Conjure gem", 89);
 		}
 		
 		private function initBuildingHelpers(): void
 		{
 			BuildHelper.bitmaps = new Object();
 			var buildHelperBitmaps:Object = BuildHelper.bitmaps;
-			buildHelperBitmaps["a"] = this.core.cnt.bmpBuildHelperAmp;
-			buildHelperBitmaps["t"] = this.core.cnt.bmpBuildHelperTower;
-			buildHelperBitmaps["r"] = this.core.cnt.bmpBuildHelperTrap;
-			buildHelperBitmaps["p"] = this.core.cnt.bmpBuildHelperPylon;
-			buildHelperBitmaps["l"] = this.core.cnt.bmpBuildHelperLantern;
+			buildHelperBitmaps["a"] = GV.ingameCore.cnt.bmpBuildHelperAmp;
+			buildHelperBitmaps["t"] = GV.ingameCore.cnt.bmpBuildHelperTower;
+			buildHelperBitmaps["r"] = GV.ingameCore.cnt.bmpBuildHelperTrap;
+			buildHelperBitmaps["p"] = GV.ingameCore.cnt.bmpBuildHelperPylon;
+			buildHelperBitmaps["l"] = GV.ingameCore.cnt.bmpBuildHelperLantern;
 		}
 		
 		private function initActiveBitmaps(): void
@@ -114,11 +136,6 @@ package ManaMason
 			this.activeBitmaps["l"] = {"occupied":0, "bitmaps": new Array()};
 			
 			this.activeWallHelpers = {"occupied":0, "movieClips": new Array()};
-		}
-		
-		public function prettyVersion(): String
-		{
-			return 'v' + VERSION + ' for ' + GAME_VERSION;
 		}
 		
 		private function reloadBlueprintList(): void
@@ -143,7 +160,7 @@ package ManaMason
 				}
 			}
 			
-			logger.log("reloadBlueprintList", "Found " + newBlueprints.length + " blueprint files.");
+			ManaMasonMod.logger.log("reloadBlueprintList", "Found " + newBlueprints.length + " blueprint files.");
 			
 			if (newBlueprints.length == 0)
 			{
@@ -227,18 +244,19 @@ package ManaMason
 				}
 				catch (e:Error)
 				{
-					logger.log("prepareFolders", "Caught an error while preparing folders!");
-					logger.log("prepareFolders", e.message);
+					ManaMasonMod.logger.log("prepareFolders", "Caught an error while preparing folders!");
+					ManaMasonMod.logger.log("prepareFolders", e.message);
 				}
 			}
 		}
 		
 		private function addEventListeners(): void
 		{
-			bezel.addEventListener("ingamePreRenderInfoPanel", eh_ingamePreRenderInfoPanel);
-			bezel.addEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
-			bezel.addEventListener("ingameClickOnScene", eh_ingameClickOnScene);
-			bezel.addEventListener("ingameRightClickOnScene", eh_ingameRightClickOnScene);
+			ManaMasonMod.bezel.addEventListener("ingamePreRenderInfoPanel", eh_ingamePreRenderInfoPanel);
+			ManaMasonMod.bezel.addEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
+			ManaMasonMod.bezel.addEventListener("ingameClickOnScene", eh_ingameClickOnScene);
+			ManaMasonMod.bezel.addEventListener("ingameRightClickOnScene", eh_ingameRightClickOnScene);
+			GV.ingameCore.cnt.addEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay);
 		}
 		
 		public function unload(): void
@@ -266,10 +284,11 @@ package ManaMason
 		
 		private function removeEventListeners(): void
 		{
-			bezel.removeEventListener("ingamePreRenderInfoPanel", eh_ingamePreRenderInfoPanel);
-			bezel.removeEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
-			bezel.removeEventListener("ingameClickOnScene", eh_ingameClickOnScene);
-			bezel.removeEventListener("ingameRightClickOnScene", eh_ingameRightClickOnScene);
+			ManaMasonMod.bezel.removeEventListener("ingamePreRenderInfoPanel", eh_ingamePreRenderInfoPanel);
+			ManaMasonMod.bezel.removeEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
+			ManaMasonMod.bezel.removeEventListener("ingameClickOnScene", eh_ingameClickOnScene);
+			ManaMasonMod.bezel.removeEventListener("ingameRightClickOnScene", eh_ingameRightClickOnScene);
+			GV.ingameCore.cnt.removeEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay);
 		}
 		
 		public function eh_interceptKeyboardEvent(e:Object): void
@@ -277,23 +296,27 @@ package ManaMason
 			var pE:KeyboardEvent = e.eventArgs.event;
 			this.shiftKeyPressed = pE.shiftKey;
 			
-			if (pE.keyCode == 45)
+			if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter capture mode").matches(pE))
 			{
-				if (pE.ctrlKey)
+				if (this.buildingMode)
+					exitBuildingMode();
+					
+				if (this.captureMode)
 				{
-					if (this.captureMode)
-					{
-						exitCaptureMode();
-					}
-					else
-					{
-						this.captureMode = true;
-						GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Click top left and bottom right corners to capture structures!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
-					}
-					e.eventArgs.continueDefault = false;
-					return;
+					exitCaptureMode();
 				}
-				
+				else
+				{
+					enterCaptureMode();
+				}
+				e.eventArgs.continueDefault = false;
+				return;
+			}
+			else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter building mode").matches(pE))
+			{
+				if (this.captureMode)
+					exitCaptureMode();
+					
 				this.buildingMode = !this.buildingMode;
 				if (!this.buildingMode)
 				{
@@ -309,14 +332,14 @@ package ManaMason
 					}
 					else
 					{
-						this.core.controller.deselectEverything(true, true);
+						GV.ingameCore.controller.deselectEverything(true, true);
 					}
 				}
 				eh_ingamePreRenderInfoPanel(null);
 				e.eventArgs.continueDefault = !this.buildingMode;
 				return;
 			}
-			else if (pE.keyCode == 82 && pE.ctrlKey)
+			else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Reload recipes").matches(pE))
 			{
 				reloadBlueprintList();
 				SB.playSound("sndalert");
@@ -328,33 +351,39 @@ package ManaMason
 			
 			if (this.buildingMode)
 			{
-				if (pE.keyCode == 33 || pE.keyCode == 38)
+				if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Cycle selected blueprint left").matches(pE))
 				{
 					cycleSelectedBlueprint(-1);
 				}
-				else if (pE.keyCode == 34 || pE.keyCode == 40)
+				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Cycle selected blueprint right").matches(pE))
 				{
 					cycleSelectedBlueprint(1);
 				}
-				else if (pE.keyCode == 86)
+				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Flip blueprint vertically").matches(pE))
 				{
 					this.selectedBlueprint.flipVertical();
 					e.eventArgs.continueDefault = false;
 					this.eh_ingamePreRenderInfoPanel(null);
 				}
-				else if (pE.keyCode == 70)
+				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Flip blueprint horizontally").matches(pE))
 				{
 					this.selectedBlueprint.flipHorizontal();
 					e.eventArgs.continueDefault = false;
 					this.eh_ingamePreRenderInfoPanel(null);
 				}
-				else if (pE.keyCode == 82)
+				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Rotate blueprint").matches(pE))
 				{
 					this.selectedBlueprint.rotate();
 					e.eventArgs.continueDefault = false;
 					this.eh_ingamePreRenderInfoPanel(null);
 				}
 			}
+		}
+		
+		private function enterCaptureMode(): void
+		{
+			this.captureMode = true;
+			GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Click top left and bottom right corners to capture structures!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
 		}
 		
 		public function eh_ingameClickOnScene(e:Object): void
@@ -368,8 +397,8 @@ package ManaMason
 			}
 			else if (this.captureMode)
 			{
-				var mouseX:Number = this.core.cnt.root.mouseX;
-				var mouseY:Number  = this.core.cnt.root.mouseY;
+				var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
+				var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
 				if (mouseX < 50 || mouseX > 50 + 1680 || mouseY < 8 || mouseY > 8 + 1064)
 				{
 					return;
@@ -389,7 +418,7 @@ package ManaMason
 					tryCaptureFromField();
 					exitCaptureMode();
 				}
-					
+				e.eventArgs.continueDefault = false;
 			}
 		}
 		
@@ -409,13 +438,13 @@ package ManaMason
 		
 		private function tryCaptureFromField(): void
 		{
-			var grid:Object = this.core.buildingAreaMatrix;
+			var grid:Object = GV.ingameCore.buildingAreaMatrix;
 			var tileProcessed: Boolean = false;
 			var structureString: String = "";
 			
-			for (var i:int = this.captureCorners[0][1]; i <= this.captureCorners[1][1]; i++) 
+			for (var i:int = captureCorners[0][1]; i <= captureCorners[1][1]; i++) 
 			{
-				for (var j:int = this.captureCorners[0][0]; j <= this.captureCorners[1][0]; j++) 
+				for (var j:int = captureCorners[0][0]; j <= captureCorners[1][0]; j++) 
 				{
 					tileProcessed = false;
 					for (var type:String in structureClasses)
@@ -434,6 +463,10 @@ package ManaMason
 				}
 				structureString += "\r\n";
 			}
+			var capturedBP: Blueprint = Blueprint.fromString(structureString);
+			blueprints.unshift(capturedBP);
+			currentBlueprintIndex = 0;
+			selectedBlueprint = blueprints[currentBlueprintIndex];
 			exportBlueprintFile(structureString);
 		}
 		
@@ -449,7 +482,7 @@ package ManaMason
 			}
 			catch (err:Error)
 			{
-				logger.log("BPexport", "Error when exporting a BP!" + err.message);
+				ManaMasonMod.logger.log("BPexport", "Error when exporting a BP!" + err.message);
 			}
 		}
 		
@@ -459,6 +492,7 @@ package ManaMason
 			this.captureCorners[0] = null;
 			this.captureCorners[1] = null;
 			this.captureMode = false;
+			crosshair.graphics.clear();
 		}
 		
 		public function eh_ingamePreRenderInfoPanel(e:Object): void
@@ -469,22 +503,26 @@ package ManaMason
 				bitmapType.occupied = 0;
 			}
 			this.activeWallHelpers.occupied = 0;
-			if (!this.buildingMode)
+			
+			if (this.buildingMode)
 			{
+				if (this.currentBlueprintIndex == -1)
+				{
+					exitBuildingMode();
+					return;
+				}
+				drawBuildingOverlay();
 				return;
 			}
+		}
+		
+		private function drawBuildingOverlay(): void
+		{
+			GV.main.cntInfoPanel.removeChild(GV.mcInfoPanel);
 			
-			if (this.currentBlueprintIndex == -1)
-			{
-				exitBuildingMode();
-				return;
-			}
-			
-			this.GV.main.cntInfoPanel.removeChild(this.GV.mcInfoPanel);
-			
-			var mouseX:Number = this.core.cnt.root.mouseX;
-			var mouseY:Number  = this.core.cnt.root.mouseY;
-			if (this.cnt.root.mouseX < 50 || this.cnt.root.mouseX > 50 + 1680 || this.cnt.root.mouseY < 8 || this.cnt.root.mouseY > 8 + 1064)
+			var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
+			var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
+			if (GV.main.cntScreens.cntIngame.root.mouseX < 50 || GV.main.cntScreens.cntIngame.root.mouseX > 50 + 1680 || GV.main.cntScreens.cntIngame.root.mouseY < 8 || GV.main.cntScreens.cntIngame.root.mouseY > 8 + 1064)
 			{
 				return;
 			}
@@ -492,29 +530,29 @@ package ManaMason
 			var vX:Number = Math.floor((mouseX - 50) / 28);
 			var vY:Number = Math.floor((mouseY - 8) / 28);
 			
-			this.core.lastZoneXMin = 50 + 28 * vX;
-			this.core.lastZoneXMax = 50 + 28 + 28 * vX;
-			this.core.lastZoneYMin = 8 + 28 * vY;
-			this.core.lastZoneYMax = 8 + 28 + 28 * vY;
+			GV.ingameCore.lastZoneXMin = 50 + 28 * vX;
+			GV.ingameCore.lastZoneXMax = 50 + 28 + 28 * vX;
+			GV.ingameCore.lastZoneYMin = 8 + 28 * vY;
+			GV.ingameCore.lastZoneYMax = 8 + 28 + 28 * vY;
 			
-			var rHUD:Object = this.core.cnt.cntRetinaHud;
-			if(!rHUD.contains(this.core.cnt.bmpWallPlaceAvailMap))
-                rHUD.addChild(this.core.cnt.bmpWallPlaceAvailMap);
-			//if(!rHUD.contains(this.core.cnt.bmpTowerPlaceAvailMap))
-			//	rHUD.addChild(this.core.cnt.bmpTowerPlaceAvailMap);
-			if(!rHUD.contains(this.core.cnt.bmpNoPlaceBeaconAvailMap))
-				rHUD.addChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
+			var rHUD:Object = GV.ingameCore.cnt.cntRetinaHud;
+			if(!rHUD.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
+                rHUD.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
+			//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
+			//	rHUD.addChild(GV.ingameCore.cnt.bmpTowerPlaceAvailMap);
+			if(!rHUD.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
+				rHUD.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
 			
-			//logger.log("eh_ingamePreRender", "Working ");
+			//ManaMasonMod.logger.log("eh_ingamePreRender", "Working ");
 			for each(var structure:Structure in this.selectedBlueprint.updateStructureCoords(mouseX, mouseY))
 			{
-				if (structure.fitsOnScene() && structure.type != "-" && !structure.rendered && this.core.arrIsSpellBtnVisible[structure.spellButtonIndex])
+				if (structure.fitsOnScene() && structure.type != "-" && !structure.rendered && GV.ingameCore.arrIsSpellBtnVisible[structure.spellButtonIndex])
 				{
 					if (structure.type == "w")
 					{
 						if (activeWallHelpers.occupied >= activeWallHelpers.movieClips.length)
 						{
-							var mcbwh:Class = Object(this.core.cnt.mcBuildHelperWallLine).constructor;
+							var mcbwh:Class = Object(GV.ingameCore.cnt.mcBuildHelperWallLine).constructor;
 							activeWallHelpers.movieClips.push(new mcbwh());
 						}
 						activeWallHelpers.movieClips[activeWallHelpers.occupied].x = structure.buildingX;
@@ -552,10 +590,35 @@ package ManaMason
 			}
 		}
 		
+		private function drawCaptureOverlay(e: MouseEvent): void
+		{
+			if (this.captureMode)
+			{
+				var rHUD: Object = GV.ingameCore.cnt.cntRetinaHud;
+				crosshair.graphics.clear();
+				crosshair.graphics.lineStyle(2, 0x00FF00, 1);
+				if(this.captureCorners[0] == null) {
+					crosshair.graphics.moveTo(0, GV.main.cntScreens.cntIngame.root.mouseY);
+					crosshair.graphics.lineTo(1680, GV.main.cntScreens.cntIngame.root.mouseY);
+					crosshair.graphics.moveTo(GV.main.cntScreens.cntIngame.root.mouseX, 0);
+					crosshair.graphics.lineTo(GV.main.cntScreens.cntIngame.root.mouseX, 1064);
+				}
+				else if (this.captureCorners[1] == null)
+				{
+					crosshair.graphics.moveTo(50 + 28 * (this.captureCorners[0][0]), 8 + 28 * (this.captureCorners[0][1]));
+					crosshair.graphics.lineTo(50 + 28 * (this.captureCorners[0][0]), GV.main.cntScreens.cntIngame.root.mouseY);
+					crosshair.graphics.lineTo(GV.main.cntScreens.cntIngame.root.mouseX, GV.main.cntScreens.cntIngame.root.mouseY);
+					crosshair.graphics.lineTo(GV.main.cntScreens.cntIngame.root.mouseX, 8 + 28 * (this.captureCorners[0][1]));
+					crosshair.graphics.lineTo(50 + 28 * (this.captureCorners[0][0]), 8 + 28 * (this.captureCorners[0][1]));
+				}
+				rHUD.addChild(crosshair);
+			}
+		}
+		
 		private function cleanupRetinaHud(): void
 		{
-			var rHUD:Object = this.core.cnt.cntRetinaHud;
-			//logger.log("cleanupRetinaHud", "Cleaning up...");
+			var rHUD: Object = GV.ingameCore.cnt.cntRetinaHud;
+			//ManaMasonMod.logger.log("cleanupRetinaHud", "Cleaning up...");
 			for each (var bitmapType:Object in this.activeBitmaps)
 			{
 				for each (var bitmap:Object in bitmapType.bitmaps)
@@ -573,14 +636,14 @@ package ManaMason
 			{
 				rHUD.removeChild(baseBitmap);
 			}
-			//this.core.controller.deselectEverything(true,true);
+			//GV.ingameCore.controller.deselectEverything(true,true);
 		}
 		
 		private function exitBuildingMode(): void
 		{
-			var rHUD:Object = this.core.cnt.cntRetinaHud;
-			rHUD.removeChild(this.core.cnt.bmpNoPlaceBeaconAvailMap);
-			rHUD.removeChild(this.core.cnt.bmpWallPlaceAvailMap);
+			var rHUD:Object = GV.ingameCore.cnt.cntRetinaHud;
+			rHUD.removeChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
+			rHUD.removeChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
 			cleanupRetinaHud();
 			this.buildingMode = false;
 		}

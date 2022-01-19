@@ -4,7 +4,9 @@ package ManaMason
 	 * ...
 	 * @author Hellrage
 	 */
-	
+	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.entity.Orblet;
+	 
 	import ManaMason.Structures.Pylon;
 	import flash.filesystem.*;
 	import flash.utils.*;
@@ -36,33 +38,36 @@ package ManaMason
 		
 		public static function fromFile(filePath:String): Blueprint
 		{
-			var result:Blueprint = new Blueprint();
 			var stream:FileStream = new FileStream();
 			try
 			{
 				stream.open(new File(filePath), FileMode.READ);
-				var recipe:String = stream.readUTFBytes(stream.bytesAvailable);
+				var bpString:String = stream.readUTFBytes(stream.bytesAvailable);
 				stream.close();
-				var parts:Array = recipe.split("Gems:"+File.lineEnding);
-				//ManaMason.ManaMason.logger.log("fromFile", parts[0]);
-				//ManaMason.ManaMason.logger.log("fromFile", parts[1]);
-				var grid:Array = parts[0].split(File.lineEnding);
-				//ManaMason.ManaMason.logger.log("fromFile", "Split into " + grid.length + " rows");
 				
-				if (parts.length > 1)
-					parseGemTemplates(parts[1].split(File.lineEnding), result);
-			
-				parseBlueprintGrid(grid, result);
-				
-				return result;
+				return fromString(bpString);
 			}
 			catch (e:Error)
 			{
-				ManaMason.ManaMason.logger.log("fromFile", "Caught an error when trying to load " + filePath);
-				ManaMason.ManaMason.logger.log("fromFile", e.message);
-				ManaMason.ManaMason.logger.log("fromFile", e.getStackTrace());
+				ManaMasonMod.logger.log("fromFile", "Caught an error when trying to load " + filePath);
+				ManaMasonMod.logger.log("fromFile", e.message);
+				ManaMasonMod.logger.log("fromFile", e.getStackTrace());
 			}
 			return emptyBlueprint;
+		}
+		
+		public static function fromString(bpString: String): Blueprint
+		{
+			var result:Blueprint = new Blueprint();
+			var parts:Array = bpString.split("Gems:"+File.lineEnding);
+			var grid:Array = parts[0].split(File.lineEnding);
+			
+			if (parts.length > 1)
+				parseGemTemplates(parts[1].split(File.lineEnding), result);
+		
+			parseBlueprintGrid(grid, result);
+			
+			return result;
 		}
 		
 		private static function parseBlueprintGrid(grid:Array, res:Blueprint): Blueprint
@@ -72,7 +77,7 @@ package ManaMason
 				for (var r:int = 0; r < grid.length; r++)
 				{
 					var char:String = grid[r].charAt(c);
-					//ManaMason.ManaMason.logger.log("fromFile", "Row\t" + rows[r] + "; Looking at symbol " + r + ";" + c + " : " + char);
+					//ManaMasonMod.logger.log("fromFile", "Row\t" + rows[r] + "; Looking at symbol " + r + ";" + c + " : " + char);
 					if (allowedSymbols.indexOf(char) != -1)
 					{
 						if (res.structureGrid[c] != undefined)
@@ -80,8 +85,8 @@ package ManaMason
 							if (res.structureGrid[c][r] != undefined)
 								continue;
 						}
-						//ManaMason.ManaMason.logger.log("fromFile", "Setting " + char);
-						//ManaMason.ManaMason.logger.log("fromFile", "Pushing a new structure " + char + " at " + r + ";" + c);
+						//ManaMasonMod.logger.log("fromFile", "Setting " + char);
+						//ManaMasonMod.logger.log("fromFile", "Pushing a new structure " + char + " at " + r + ";" + c);
 						var structure:Structure = StructureFactory.CreateStructure(char, c, r);
 						res.setStructureGridSlot(c, r, structure);
 						if (structure.size == 2)
@@ -128,7 +133,6 @@ package ManaMason
 		
 		private static function applyProps(gem:FakeGem, props:Array): FakeGem
 		{
-			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
 			try
 			{
 				switch (props[0]) 
@@ -201,8 +205,8 @@ package ManaMason
 			}
 			catch (e:Error)
 			{
-				ManaMason.ManaMason.logger.log("applyProps", "Caught an error while parsing a gem's props!");
-				ManaMason.ManaMason.logger.log("applyProps", e.message);
+				ManaMasonMod.logger.log("applyProps", "Caught an error while parsing a gem's props!");
+				ManaMasonMod.logger.log("applyProps", e.message);
 				return null;
 			}
 			return null;
@@ -262,7 +266,7 @@ package ManaMason
 				this.structureGrid[row+1][column] = value;
 				this.structureGrid[row+1][column+1] = value;
 			}
-			//ManaMason.ManaMason.logger.log("setStructureGridSlot", "Pushed a new structure " + value.toString());
+			//ManaMasonMod.logger.log("setStructureGridSlot", "Pushed a new structure " + value.toString());
 		}
 		
 		private static function createTestBlueprint(): Blueprint
@@ -357,40 +361,35 @@ package ManaMason
 		
 		public function castBuild(buildOnPath:Boolean): void
 		{
-			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
-			
 			for each (var str:Structure in this.structures)
 			{
-				if (str.fitsOnScene() && core.arrIsSpellBtnVisible[str.spellButtonIndex])
+				if (str.fitsOnScene() && GV.ingameCore.arrIsSpellBtnVisible[str.spellButtonIndex])
 				{
 					str.castBuild(buildOnPath);
 				}
 			}
-			core.renderer2.redrawHighBuildings();
-			core.renderer2.redrawWalls();
-			core.resetAllPNNMatrices();
-			var iLim:int = core.monstersOnScene.length;
+			GV.ingameCore.renderer2.redrawHighBuildings();
+			GV.ingameCore.renderer2.redrawWalls();
+			GV.ingameCore.resetAllPNNMatrices();
+			var iLim:int = GV.ingameCore.monstersOnScene.length;
 			for(var i:int = 0; i < iLim; i++)
 			{
-				if(core.monstersOnScene[i] == null)
+				if(GV.ingameCore.monstersOnScene[i] == null)
 				{
-					core.monstersOnScene.splice(i,1);
+					GV.ingameCore.monstersOnScene.splice(i,1);
 					i--;
 					iLim--;
 				}
 				else
 				{
-					core.monstersOnScene[i].getNextPatrolSector();
+					GV.ingameCore.monstersOnScene[i].getNextPatrolSector();
 				}
 			}
-			iLim = core.orblets.length;
+			iLim = GV.ingameCore.orblets.length;
 			for(i = 0; i < iLim; i++)
 			{
-				var orblet:Object = core.orblets[i];
-				var orbletClassName:String = 'com.giab.games.gcfw.entity.Orblet';
-				var ST_DROPPED:String = 'ST_DROPPED';
-				var Orblet:Class = getDefinitionByName(orbletClassName) as Class;
-				if(orblet.status == Orblet[ST_DROPPED])
+				var orblet: Orblet = GV.ingameCore.orblets[i];
+				if(orblet.status == Orblet.ST_DROPPED)
 				{
 					orblet.getNextPatrolSector();
 				}

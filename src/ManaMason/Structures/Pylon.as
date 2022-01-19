@@ -5,6 +5,9 @@ package ManaMason.Structures
 	 * @author Hellrage
 	 */
 	
+	import com.giab.games.gcfw.constants.BuildingType;
+	import com.giab.games.gcfw.GV;
+	
 	import ManaMason.Structure;
 	
 	public class Pylon extends Structure
@@ -13,73 +16,68 @@ package ManaMason.Structures
 		
 		public function Pylon(bpIX:int, bpIY:int) 
 		{
-			var BUILDING_TYPE:Object = ManaMason.ManaMason.bezel.gameObjects.constants.buildingType;
 			super("p", bpIX, bpIY);
 			this.rendered = false;
 			this.size = 2;
 			this.xOffset = -4;
 			this.yOffset = -5;
 			
-			this.buildingType = BUILDING_TYPE.PYLON;
+			this.buildingType = BuildingType.PYLON;
 			this.spellButtonIndex = 17;
 			this.targetPriority = 0;
 		}
 		
 		public override function castBuild(buildOnPath:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
 		{
-			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
-			var existingBuilding: Object = core.buildingRegPtMatrix[buildingGridY][buildingGridX];
+			var existingBuilding: Object = GV.ingameCore.buildingRegPtMatrix[buildingGridY][buildingGridX];
 			
-			if (existingBuilding is ManaMason.ManaMason.structureClasses['p'])
+			if (existingBuilding is ManaMason.GCFWManaMason.structureClasses['p'])
 			{
 				if (existingBuilding.insertedGem == null)
 					super.castBuild(spendMana, trackStats);
 				return;
 			}
 			
-			if (spendMana && core.getMana() < this.getCurrentManaCost())
+			if (spendMana && GV.ingameCore.getMana() < this.getCurrentManaCost())
 				return;
 				
 			if (!buildOnPath && (
-				core.groundMatrix[buildingGridY][buildingGridX] == "#" ||
-				core.groundMatrix[buildingGridY+1][buildingGridX] == "#" ||
-				core.groundMatrix[buildingGridY][buildingGridX+1] == "#" ||
-				core.groundMatrix[buildingGridY+1][buildingGridX+1] == "#"))
+				GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#" ||
+				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX] == "#" ||
+				GV.ingameCore.groundMatrix[buildingGridY][buildingGridX+1] == "#" ||
+				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX+1] == "#"))
 				return;
 				
-			if (core.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType))
+			if (GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType))
 			{
-				if (!core.calculator.isNew2x2BuildingBlocking(buildingGridX, buildingGridY))
+				if (!GV.ingameCore.calculator.isNew2x2BuildingBlocking(buildingGridX, buildingGridY))
 				{
-					core.creator.buildPylon(buildingGridX, buildingGridY);
+					GV.ingameCore.creator.buildPylon(buildingGridX, buildingGridY);
 					if (trackStats)
 					{
-						core.stats.spentManaOnPylons += Math.max(0, this.getCurrentManaCost());
+						GV.ingameCore.stats.spentManaOnPylons += Math.max(0, this.getCurrentManaCost());
 					}
 				}
 				else return;
 			}
 			else return;
 			
-			core.buildingAreaMatrix[buildingGridY][buildingGridX].targetPriority = this.targetPriority;
+			GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX].targetPriority = this.targetPriority;
 			if (spendMana)
 			{
-				core.changeMana( -this.getCurrentManaCost(), false, true);
+				GV.ingameCore.changeMana( -this.getCurrentManaCost(), false, true);
 				this.incrementManaCost();
 			}
 		}
 	
 		public override function incrementManaCost(): void
 		{
-			var GV:Object = ManaMason.ManaMason.bezel.gameObjects.GV;
-			var core:Object = GV.ingameCore;
-			core.currentPylonBuildingManaCost.s(Math.round(GV.PYLON_COST_MULT.g() * (core.currentPylonBuildingManaCost.g() + Math.round(GV.PYLON_COST_INCREMENT.g()))));
+			GV.ingameCore.currentPylonBuildingManaCost.s(Math.round(GV.PYLON_COST_MULT.g() * (GV.ingameCore.currentPylonBuildingManaCost.g() + Math.round(GV.PYLON_COST_INCREMENT.g()))));
 		}
 		
 		public override function getCurrentManaCost(): Number
 		{
-			var core:Object = ManaMason.ManaMason.bezel.gameObjects.GV.ingameCore;
-			return core.currentPylonBuildingManaCost.g();
+			return GV.ingameCore.currentPylonBuildingManaCost.g();
 		}
 		
 		public override function insertGem(gem:Object): void
