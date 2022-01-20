@@ -11,14 +11,18 @@ package ManaMason
 	import Bezel.Logger;
 	import Bezel.Utils.Keybind;
 	import Bezel.Utils.SettingManager;
+	import ManaMason.Utils.LockedInfoPanel;
 	import com.giab.common.abstract.SpriteExt;
+	import com.giab.games.gcfw.constants.IngameStatus;
 	import com.giab.games.gcfw.entity.Amplifier;
 	import com.giab.games.gcfw.entity.Lantern;
 	import com.giab.games.gcfw.entity.Pylon;
 	import com.giab.games.gcfw.entity.Tower;
 	import com.giab.games.gcfw.entity.Trap;
 	import com.giab.games.gcfw.entity.Wall;
+	import com.giab.games.gcfw.mcDyn.McOptPanel;
 	import flash.display.Shape;
+	import flash.ui.Keyboard;
 	
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.SB;
@@ -50,20 +54,38 @@ package ManaMason
 		private var captureCorners: Object;
 		private var shiftKeyPressed:Boolean;
 		
-		private var crosshair:Shape;
-		private var infoPanel: McInfoPanel;
+		private var _crosshair:Shape;
+		private var _lockedInfoPanel: LockedInfoPanel;
+		private var _baseInfoPanel: McInfoPanel;
+		private function get crosshair():Shape {
+			if (_crosshair == null)
+			{
+				initUI();
+			}
+			return _crosshair;
+		}
+		private function get infoPanel():LockedInfoPanel {
+			if (_lockedInfoPanel == null)
+			{
+				initUI();
+			}
+			return _lockedInfoPanel;
+		}
 		
 		private static var settings: SettingManager;
+		private static var blueprintOptions: BlueprintOptions;
 		
 		public function GCFWManaMason() 
 		{
 			super();
+			
 			storage = File.applicationStorageDirectory.resolvePath("ManaMason");
 			
 			this.blueprints = new Array();
 			this.shiftKeyPressed = false;
 			this.captureMode = false;
 			this.captureCorners = new Object();
+			blueprintOptions = new BlueprintOptions();
 			captureCorners[0] = null;
 			captureCorners[1] = null;
 			
@@ -97,8 +119,11 @@ package ManaMason
 		
 		private function initUI(): void
 		{
-			crosshair = new Shape();
-			infoPanel = new McInfoPanel();
+			_baseInfoPanel = new McInfoPanel();
+			_crosshair = new Shape();
+			_lockedInfoPanel = new ManaMason.Utils.LockedInfoPanel(_baseInfoPanel);
+			infoPanel.setup(1920 - 1728, 670, 1728, 230, 4278190080);
+			infoPanel.basePanel.addEventListener(MouseEvent.CLICK, function(me:MouseEvent):void {GV.vfxEngine.createFloatingText4(400, 400, "InfoPanelCLicked!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13); });
 		}
 		
 		private function registerDefaultSettings(): void
@@ -257,10 +282,15 @@ package ManaMason
 		{
 			ManaMasonMod.bezel.addEventListener("ingamePreRenderInfoPanel", eh_ingamePreRenderInfoPanel);
 			ManaMasonMod.bezel.addEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
-			ManaMasonMod.bezel.addEventListener("ingameClickOnScene", eh_ingameClickOnScene);
-			ManaMasonMod.bezel.addEventListener("ingameRightClickOnScene", eh_ingameRightClickOnScene);
-			GV.ingameCore.cnt.addEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay);
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true, 10);
+			GV.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay, true, 10);
 			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
+		}
+		
+		private function eh_discardAllMouseInput(e:MouseEvent):void
+		{
+			e.stopImmediatePropagation();
 		}
 		
 		public function unload(): void
@@ -290,9 +320,9 @@ package ManaMason
 		{
 			ManaMasonMod.bezel.removeEventListener("ingamePreRenderInfoPanel", eh_ingamePreRenderInfoPanel);
 			ManaMasonMod.bezel.removeEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
-			ManaMasonMod.bezel.removeEventListener("ingameClickOnScene", eh_ingameClickOnScene);
-			ManaMasonMod.bezel.removeEventListener("ingameRightClickOnScene", eh_ingameRightClickOnScene);
-			GV.ingameCore.cnt.removeEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay);
+			GV.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
+			GV.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
+			GV.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay, true);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
 		}
 		
@@ -300,6 +330,14 @@ package ManaMason
 		{
 			var pE:KeyboardEvent = e.eventArgs.event;
 			this.shiftKeyPressed = pE.shiftKey;
+			
+			if (pE.keyCode == Keyboard.ESCAPE)
+			{
+				if (this.buildingMode)
+					exitBuildingMode();
+				if (this.captureMode)
+					exitCaptureMode();
+			}
 			
 			if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter capture mode").matches(pE))
 			{
@@ -322,23 +360,13 @@ package ManaMason
 				if (this.captureMode)
 					exitCaptureMode();
 					
-				this.buildingMode = !this.buildingMode;
-				if (!this.buildingMode)
+				if (this.buildingMode)
 				{
 					exitBuildingMode();
 				}
 				else
 				{
-					if (this.currentBlueprintIndex == -1)
-					{
-						SB.playSound("sndalert");
-						GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"No blueprints in the blueprints folder!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
-						this.buildingMode = false;
-					}
-					else
-					{
-						GV.ingameCore.controller.deselectEverything(true, true);
-					}
+					enterBuildingMode();
 				}
 				eh_ingamePreRenderInfoPanel(null);
 				e.eventArgs.continueDefault = !this.buildingMode;
@@ -388,7 +416,46 @@ package ManaMason
 		private function enterCaptureMode(): void
 		{
 			this.captureMode = true;
-			GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Click top left and bottom right corners to capture structures!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
+			GV.mcInfoPanel.visible = false;
+			discardAllMouseInput();
+			drawCaptureOverlay(null);
+		}
+		
+		private function enterBuildingMode(): void
+		{
+			if (this.currentBlueprintIndex == -1)
+			{
+				SB.playSound("sndalert");
+				GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"No blueprints in the blueprints folder!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
+			}
+			else
+			{
+				this.buildingMode = true;
+				GV.mcInfoPanel.visible = false;
+				//discardAllMouseInput();
+				GV.ingameCore.controller.deselectEverything(true, true);
+			}
+		}
+		
+		private function discardAllMouseInput(): void
+		{
+			GV.main.stage.addEventListener(MouseEvent.CLICK, eh_discardAllMouseInput, true, 5, false);
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, eh_discardAllMouseInput, true, 5, false);
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_UP, eh_discardAllMouseInput, true, 5, false);
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_OVER, eh_discardAllMouseInput, true, 5, false);
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_OUT, eh_discardAllMouseInput, true, 5, false);
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_MOVE, eh_discardAllMouseInput, true, 5, false);
+		}
+		
+		private function restoreAllMouseInput(): void
+		{
+			
+			GV.main.stage.removeEventListener(MouseEvent.CLICK, eh_discardAllMouseInput, true);
+			GV.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, eh_discardAllMouseInput, true);
+			GV.main.stage.removeEventListener(MouseEvent.MOUSE_UP, eh_discardAllMouseInput, true);
+			GV.main.stage.removeEventListener(MouseEvent.MOUSE_OVER, eh_discardAllMouseInput, true);
+			GV.main.stage.removeEventListener(MouseEvent.MOUSE_OUT, eh_discardAllMouseInput, true);
+			GV.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, eh_discardAllMouseInput, true);
 		}
 		
 		public function eh_ingameWheelScrolled(e: MouseEvent): void
@@ -404,23 +471,25 @@ package ManaMason
 			e.stopImmediatePropagation();
 		}
 		
-		public function eh_ingameClickOnScene(e:Object): void
+		public function clickOnScene(mE:MouseEvent): void
 		{
-			var mE:MouseEvent = e.eventArgs.event as MouseEvent;
+			if (GV.ingameCore.ingameStatus != IngameStatus.PLAYING)
+				return;
+				
+			var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
+			var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
+			
+			if (mouseX < 50 || mouseX > 50 + 1680 || mouseY < 8 || mouseY > 8 + 1064)
+			{
+				return;
+			}
 			
 			if (this.buildingMode)
 			{
 				this.selectedBlueprint.castBuild(!this.shiftKeyPressed);
-				//e.eventArgs.continueDefault = false;	
 			}
 			else if (this.captureMode)
 			{
-				var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
-				var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
-				if (mouseX < 50 || mouseX > 50 + 1680 || mouseY < 8 || mouseY > 8 + 1064)
-				{
-					return;
-				}
 					
 				var vX:Number = Math.floor((mouseX - 50) / 28);
 				var vY:Number = Math.floor((mouseY - 8) / 28);
@@ -428,21 +497,51 @@ package ManaMason
 				if (this.captureCorners[0] == null)
 				{
 					this.captureCorners[0] = [vX, vY];
-
+					drawCaptureOverlay(mE);
 				}
 				else if (this.captureCorners[1] == null)
 				{
-					this.captureCorners[1] = [vX, vY];
+					var cx: Number = this.captureCorners[0][0];
+					var cy: Number = this.captureCorners[0][1];
+					if (vX -cx <= 0 && vY - cy <= 0)
+					{
+						this.captureCorners[0] = [vX, vY];
+						this.captureCorners[1] = [cx, cy];
+					}
+					else if(vX -cx >= 0 && vY - cy >= 0)
+					{
+						this.captureCorners[1] = [vX, vY];
+						this.captureCorners[0] = [cx, cy];
+					}
+					else
+					{
+						cx = vX;
+						vX = this.captureCorners[0][0];
+						if (vX -cx <= 0 && vY - cy <= 0)
+						{
+							this.captureCorners[0] = [vX, vY];
+							this.captureCorners[1] = [cx, cy];
+						}
+						else if(vX -cx >= 0 && vY - cy >= 0)
+						{
+							this.captureCorners[1] = [vX, vY];
+							this.captureCorners[0] = [cx, cy];
+						}
+						else
+						{
+							exitCaptureMode();
+							return;
+						}
+					}
+					
 					tryCaptureFromField();
 					exitCaptureMode();
 				}
-				e.eventArgs.continueDefault = false;
 			}
 		}
 		
-		public function eh_ingameRightClickOnScene(e:Object): void
+		public function rightClickOnScene(mE:MouseEvent): void
 		{
-			var mE:MouseEvent = e.eventArgs.event as MouseEvent;
 			if (this.buildingMode)
 			{
 				exitBuildingMode();
@@ -486,6 +585,7 @@ package ManaMason
 			currentBlueprintIndex = 0;
 			selectedBlueprint = blueprints[currentBlueprintIndex];
 			exportBlueprintFile(structureString);
+			GV.vfxEngine.createFloatingText4(GV.main.mouseX, GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20), "Blueprint captured!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13);
 		}
 		
 		private function exportBlueprintFile(bpString: String): void
@@ -506,10 +606,12 @@ package ManaMason
 		
 		private function exitCaptureMode(): void
 		{
-			GV.vfxEngine.createFloatingText4(GV.main.mouseX, GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20), "Exiting capture mode!", 16768392, 12, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 12, 0, 1000);
 			this.captureCorners[0] = null;
 			this.captureCorners[1] = null;
 			this.captureMode = false;
+			infoPanel.hide();
+			GV.mcInfoPanel.visible = true;
+			restoreAllMouseInput();
 			crosshair.graphics.clear();
 		}
 		
@@ -537,111 +639,123 @@ package ManaMason
 		
 		private function drawBuildingOverlay(): void
 		{
-			GV.main.cntInfoPanel.removeChild(GV.mcInfoPanel);
 			var rHUD:SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
 			
 			var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
 			var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
-			if (GV.main.cntScreens.cntIngame.root.mouseX < 50 || GV.main.cntScreens.cntIngame.root.mouseX > 50 + 1680 || GV.main.cntScreens.cntIngame.root.mouseY < 8 || GV.main.cntScreens.cntIngame.root.mouseY > 8 + 1064)
+			if (GV.main.cntScreens.cntIngame.root.mouseX > 50 && GV.main.cntScreens.cntIngame.root.mouseX < 50 + 1680 && GV.main.cntScreens.cntIngame.root.mouseY > 8 && GV.main.cntScreens.cntIngame.root.mouseY < 8 + 1064)
 			{
-				return;
-			}
-                
-			var vX:Number = Math.floor((mouseX - 50) / 28);
-			var vY:Number = Math.floor((mouseY - 8) / 28);
-			
-			GV.ingameCore.lastZoneXMin = 50 + 28 * vX;
-			GV.ingameCore.lastZoneXMax = 50 + 28 + 28 * vX;
-			GV.ingameCore.lastZoneYMin = 8 + 28 * vY;
-			GV.ingameCore.lastZoneYMax = 8 + 28 + 28 * vY;
-			
-			if(!rHUD.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
-                rHUD.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
-			//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
-			//	rHUD.addChild(GV.ingameCore.cnt.bmpTowerPlaceAvailMap);
-			if(!rHUD.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
-				rHUD.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
-			
-			//ManaMasonMod.logger.log("eh_ingamePreRender", "Working ");
-			for each(var structure:Structure in this.selectedBlueprint.updateStructureCoords(mouseX, mouseY))
-			{
-				if (structure.fitsOnScene() && structure.type != "-" && !structure.rendered && GV.ingameCore.arrIsSpellBtnVisible[structure.spellButtonIndex])
+				var vX:Number = Math.floor((mouseX - 50) / 28);
+				var vY:Number = Math.floor((mouseY - 8) / 28);
+				
+				GV.ingameCore.lastZoneXMin = 50 + 28 * vX;
+				GV.ingameCore.lastZoneXMax = 50 + 28 + 28 * vX;
+				GV.ingameCore.lastZoneYMin = 8 + 28 * vY;
+				GV.ingameCore.lastZoneYMax = 8 + 28 + 28 * vY;
+				
+				if(!rHUD.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
+					rHUD.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
+				//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
+				//	rHUD.addChild(GV.ingameCore.cnt.bmpTowerPlaceAvailMap);
+				if(!rHUD.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
+					rHUD.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
+				
+				//ManaMasonMod.logger.log("eh_ingamePreRender", "Working ");
+				for each(var structure:Structure in this.selectedBlueprint.updateStructureCoords(mouseX, mouseY))
 				{
-					if (structure.type == "w")
+					if (structure.fitsOnScene() && structure.type != "-" && !structure.rendered && GV.ingameCore.arrIsSpellBtnVisible[structure.spellButtonIndex])
 					{
-						if (activeWallHelpers.occupied >= activeWallHelpers.movieClips.length)
+						if (structure.type == "w")
 						{
-							var mcbwh:Class = Object(GV.ingameCore.cnt.mcBuildHelperWallLine).constructor;
-							activeWallHelpers.movieClips.push(new mcbwh());
+							if (activeWallHelpers.occupied >= activeWallHelpers.movieClips.length)
+							{
+								var mcbwh:Class = Object(GV.ingameCore.cnt.mcBuildHelperWallLine).constructor;
+								activeWallHelpers.movieClips.push(new mcbwh());
+							}
+							activeWallHelpers.movieClips[activeWallHelpers.occupied].x = structure.buildingX;
+							activeWallHelpers.movieClips[activeWallHelpers.occupied].y = structure.buildingY;
+							activeWallHelpers.movieClips[activeWallHelpers.occupied].rotation = 0;
+							activeWallHelpers.movieClips[activeWallHelpers.occupied].gotoAndStop(1);
+							activeWallHelpers.occupied++;
 						}
-						activeWallHelpers.movieClips[activeWallHelpers.occupied].x = structure.buildingX;
-						activeWallHelpers.movieClips[activeWallHelpers.occupied].y = structure.buildingY;
-						activeWallHelpers.movieClips[activeWallHelpers.occupied].rotation = 0;
-						activeWallHelpers.movieClips[activeWallHelpers.occupied].gotoAndStop(1);
-						activeWallHelpers.occupied++;
-					}
-					else
-					{
-						var typeBitmaps:Object = this.activeBitmaps[structure.type];
-						if (typeBitmaps.occupied >= typeBitmaps.bitmaps.length)
+						else
 						{
-							typeBitmaps.bitmaps.push(new Bitmap(BuildHelper.bitmaps[structure.type].bitmapData));
+							var typeBitmaps:Object = this.activeBitmaps[structure.type];
+							if (typeBitmaps.occupied >= typeBitmaps.bitmaps.length)
+							{
+								typeBitmaps.bitmaps.push(new Bitmap(BuildHelper.bitmaps[structure.type].bitmapData));
+							}
+							typeBitmaps.bitmaps[typeBitmaps.occupied].x = structure.buildingX;
+							typeBitmaps.bitmaps[typeBitmaps.occupied].y = structure.buildingY;
+							typeBitmaps.occupied++;
 						}
-						typeBitmaps.bitmaps[typeBitmaps.occupied].x = structure.buildingX;
-						typeBitmaps.bitmaps[typeBitmaps.occupied].y = structure.buildingY;
-						typeBitmaps.occupied++;
+						structure.rendered = true;
 					}
-					structure.rendered = true;
 				}
-			}
-			
-			for each (var type:Object in this.activeBitmaps)
-			{
-				for (var i:int = 0; i < type.occupied; i++)
+				
+				for each (var type:Object in this.activeBitmaps)
 				{
-					rHUD.addChild(type.bitmaps[i]);
+					for (var i:int = 0; i < type.occupied; i++)
+					{
+						rHUD.addChild(type.bitmaps[i]);
+					}
 				}
+				
+				for (var wmci:int = 0; wmci < this.activeWallHelpers.occupied; wmci++)
+				{
+					rHUD.addChild(this.activeWallHelpers.movieClips[wmci]);
+				}
+			
 			}
 			
-			for (var wmci:int = 0; wmci < this.activeWallHelpers.occupied; wmci++)
-			{
-				rHUD.addChild(this.activeWallHelpers.movieClips[wmci]);
-			}
-			
-			infoPanel.reset();
-			infoPanel.isLocationLocked = true;
-			infoPanel.lockedX = 50;
-			infoPanel.lockedY = 8;
-			infoPanel.addTextfield(16777215, this.selectedBlueprint.name || "No blueprint", true, 13);
-			infoPanel.visible = true;
-			rHUD.addChild(infoPanel);
-			infoPanel.doEnterFrame();
-			//infoPanel.mouseEnabled = true;
+			infoPanel.setup(1920 - 1728, 670, 1728, 230, 4278190080);
+			infoPanel.basePanel.addTextfield(16777215, this.selectedBlueprint.name || "No blueprint", true, 11);
+			infoPanel.basePanel.addExtraHeight(10);
+			infoPanel.addOptions(blueprintOptions);
+			infoPanel.show();
+			infoPanel.basePanel.mouseEnabled = true;
 		}
 		
 		private function drawCaptureOverlay(e: MouseEvent): void
 		{
-			if (this.captureMode)
+			if (!this.captureMode)
+				return;
+				
+			var mX: Number = GV.main.cntScreens.cntIngame.root.mouseX;
+			var mY: Number = GV.main.cntScreens.cntIngame.root.mouseY;
+			
+			infoPanel.setup(1680, -1, 50, 8, 4278190080);
+			var text: String = "";
+			
+			if (mX > 50 &&
+				mX < 50 + 1680 &&
+				mY > 8 &&
+				mY < 8 + 1064)
 			{
 				var rHUD: SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
 				crosshair.graphics.clear();
 				crosshair.graphics.lineStyle(2, 0x00FF00, 1);
-				if(this.captureCorners[0] == null) {
-					crosshair.graphics.moveTo(0, GV.main.cntScreens.cntIngame.root.mouseY);
-					crosshair.graphics.lineTo(1680, GV.main.cntScreens.cntIngame.root.mouseY);
-					crosshair.graphics.moveTo(GV.main.cntScreens.cntIngame.root.mouseX, 0);
-					crosshair.graphics.lineTo(GV.main.cntScreens.cntIngame.root.mouseX, 1064);
+				if (this.captureCorners[0] == null) {
+					text = "Please click one corner of your selection.";
+					crosshair.graphics.moveTo(50, mY);
+					crosshair.graphics.lineTo(1680+50, mY);
+					crosshair.graphics.moveTo(mX, 8);
+					crosshair.graphics.lineTo(mX, 1064+8);
 				}
 				else if (this.captureCorners[1] == null)
 				{
-					crosshair.graphics.moveTo(50 + 28 * (this.captureCorners[0][0]), 8 + 28 * (this.captureCorners[0][1]));
-					crosshair.graphics.lineTo(50 + 28 * (this.captureCorners[0][0]), GV.main.cntScreens.cntIngame.root.mouseY);
-					crosshair.graphics.lineTo(GV.main.cntScreens.cntIngame.root.mouseX, GV.main.cntScreens.cntIngame.root.mouseY);
-					crosshair.graphics.lineTo(GV.main.cntScreens.cntIngame.root.mouseX, 8 + 28 * (this.captureCorners[0][1]));
-					crosshair.graphics.lineTo(50 + 28 * (this.captureCorners[0][0]), 8 + 28 * (this.captureCorners[0][1]));
+					text = "Please click the opposite corner of your selection.";
+					crosshair.graphics.moveTo(50 + 14 + 28 * (this.captureCorners[0][0]), 8 + 14 + 28 * (this.captureCorners[0][1]));
+					crosshair.graphics.lineTo(50 + 14 + 28 * (this.captureCorners[0][0]), mY);
+					crosshair.graphics.lineTo(mX, mY);
+					crosshair.graphics.lineTo(mX, 8 + 14 + 28 * (this.captureCorners[0][1]));
+					crosshair.graphics.lineTo(50 + 14 + 28 * (this.captureCorners[0][0]), 8 + 14 + 28 * (this.captureCorners[0][1]));
 				}
 				rHUD.addChild(crosshair);
 			}
+			
+			infoPanel.basePanel.addTextfield(16777215, text, true, 11);
+			infoPanel.show();
 		}
 		
 		private function cleanupRetinaHud(): void
@@ -673,7 +787,9 @@ package ManaMason
 			var rHUD:Object = GV.ingameCore.cnt.cntRetinaHud;
 			rHUD.removeChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
 			rHUD.removeChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
-			rHUD.removeChild(infoPanel);
+			infoPanel.hide();
+			restoreAllMouseInput();
+			GV.mcInfoPanel.visible = true;
 			cleanupRetinaHud();
 			this.buildingMode = false;
 		}
