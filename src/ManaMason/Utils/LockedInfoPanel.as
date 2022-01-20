@@ -79,7 +79,7 @@ package ManaMason.Utils
 					{
 						var current:Boolean = opt.value;
 						opt.value = !current;
-						e.target.btn.gotoAndStop(!current ? 2 : 1);
+						e.target.parent.btn.gotoAndStop(!current ? 2 : 1);
 					};
 				}(option);
 				

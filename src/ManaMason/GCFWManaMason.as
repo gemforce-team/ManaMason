@@ -285,7 +285,6 @@ package ManaMason
 			GV.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true, 10);
 			GV.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
 			GV.main.stage.addEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
-			GV.main.stage.addEventListener(Event.ENTER_FRAME, drawBuildingOverlay);
 			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
 		}
 		
@@ -324,7 +323,6 @@ package ManaMason
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
 			GV.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
 			GV.main.stage.removeEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
-			GV.main.stage.removeEventListener(Event.ENTER_FRAME, drawBuildingOverlay);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
 		}
 		
@@ -369,6 +367,7 @@ package ManaMason
 				else
 				{
 					enterBuildingMode();
+					drawBuildingOverlay(null);
 				}
 				eh_ingamePreRenderInfoPanel(null);
 				e.eventArgs.continueDefault = !this.buildingMode;
@@ -632,7 +631,10 @@ package ManaMason
 				if (this.currentBlueprintIndex == -1)
 				{
 					exitBuildingMode();
+					return;
 				}
+				drawBuildingOverlay(null);
+				return;
 			}
 		}
 		
@@ -641,7 +643,6 @@ package ManaMason
 			if (!this.buildingMode)
 				return;
 			var rHUD:SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
-			rHUD.graphics.clear();
 			
 			var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
 			var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
