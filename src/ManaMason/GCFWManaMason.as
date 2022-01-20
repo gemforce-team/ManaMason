@@ -260,7 +260,7 @@ package ManaMason
 			ManaMasonMod.bezel.addEventListener("ingameClickOnScene", eh_ingameClickOnScene);
 			ManaMasonMod.bezel.addEventListener("ingameRightClickOnScene", eh_ingameRightClickOnScene);
 			GV.ingameCore.cnt.addEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay);
-			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, false, 10);
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
 		}
 		
 		public function unload(): void
@@ -293,7 +293,7 @@ package ManaMason
 			ManaMasonMod.bezel.removeEventListener("ingameClickOnScene", eh_ingameClickOnScene);
 			ManaMasonMod.bezel.removeEventListener("ingameRightClickOnScene", eh_ingameRightClickOnScene);
 			GV.ingameCore.cnt.removeEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay);
-			GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, false);
+			GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
 		}
 		
 		public function eh_interceptKeyboardEvent(e:Object): void
@@ -337,8 +337,6 @@ package ManaMason
 					}
 					else
 					{
-						
-						GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL,GV.ingameCore.inputHandler.ehWheel,true);
 						GV.ingameCore.controller.deselectEverything(true, true);
 					}
 				}
@@ -402,6 +400,8 @@ package ManaMason
 				cycleSelectedBlueprint( -1);
 			else
 				cycleSelectedBlueprint(1);
+				
+			e.stopImmediatePropagation();
 		}
 		
 		public function eh_ingameClickOnScene(e:Object): void
@@ -676,7 +676,6 @@ package ManaMason
 			rHUD.removeChild(infoPanel);
 			cleanupRetinaHud();
 			this.buildingMode = false;
-			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, GV.ingameCore.inputHandler.ehWheel, true, 0, true);
 		}
 	}
 
