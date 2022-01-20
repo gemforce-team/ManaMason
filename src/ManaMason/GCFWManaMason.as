@@ -8,6 +8,7 @@ package ManaMason
 	import Bezel.Events.EventTypes;
 	import Bezel.Events.IngameGemInfoPanelFormedEvent;
 	import Bezel.Events.IngameKeyDownEvent;
+	import Bezel.Logger;
 	import Bezel.Utils.Keybind;
 	import Bezel.Utils.SettingManager;
 	import com.giab.common.abstract.SpriteExt;
@@ -50,6 +51,7 @@ package ManaMason
 		private var shiftKeyPressed:Boolean;
 		
 		private var crosshair:Shape;
+		private var infoPanel: McInfoPanel;
 		
 		private static var settings: SettingManager;
 		
@@ -76,7 +78,7 @@ package ManaMason
 			//settings = SettingManager.getManager("ManaMason");
 			//registerDefaultSettings();
 			
-			initCrosshair();
+			initUI();
 			
 			registerKeybinds();
 			
@@ -93,9 +95,10 @@ package ManaMason
 			ManaMasonMod.logger.log("bind", "ManaMason initialized!");
 		}
 		
-		private function initCrosshair(): void
+		private function initUI(): void
 		{
 			crosshair = new Shape();
+			infoPanel = new McInfoPanel();
 		}
 		
 		private function registerDefaultSettings(): void
@@ -149,7 +152,7 @@ package ManaMason
 				var fileName:String = fileList[f].name;
 				if (fileName.substring(fileName.length - 4, fileName.length) == ".txt")
 				{
-					var blueprint:Blueprint = Blueprint.fromFile(blueprintsFolder.resolvePath(fileName).nativePath);
+					var blueprint:Blueprint = Blueprint.fromFile(blueprintsFolder.resolvePath(fileName).nativePath, fileName);
 					if(blueprint != Blueprint.emptyBlueprint)
 						newBlueprints.push(blueprint);
 					else
@@ -393,7 +396,7 @@ package ManaMason
 			if (this.buildingMode)
 			{
 				this.selectedBlueprint.castBuild(!this.shiftKeyPressed);
-				e.eventArgs.continueDefault = false;	
+				//e.eventArgs.continueDefault = false;	
 			}
 			else if (this.captureMode)
 			{
@@ -463,7 +466,7 @@ package ManaMason
 				}
 				structureString += "\r\n";
 			}
-			var capturedBP: Blueprint = Blueprint.fromString(structureString);
+			var capturedBP: Blueprint = Blueprint.fromString(structureString, "Captured BP");
 			blueprints.unshift(capturedBP);
 			currentBlueprintIndex = 0;
 			selectedBlueprint = blueprints[currentBlueprintIndex];
@@ -498,6 +501,7 @@ package ManaMason
 		public function eh_ingamePreRenderInfoPanel(e:Object): void
 		{
 			cleanupRetinaHud();
+			
 			for each (var bitmapType:Object in this.activeBitmaps)
 			{
 				bitmapType.occupied = 0;
@@ -519,6 +523,7 @@ package ManaMason
 		private function drawBuildingOverlay(): void
 		{
 			GV.main.cntInfoPanel.removeChild(GV.mcInfoPanel);
+			var rHUD:SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
 			
 			var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
 			var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
@@ -535,7 +540,6 @@ package ManaMason
 			GV.ingameCore.lastZoneYMin = 8 + 28 * vY;
 			GV.ingameCore.lastZoneYMax = 8 + 28 + 28 * vY;
 			
-			var rHUD:SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
 			if(!rHUD.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
                 rHUD.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
 			//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
@@ -588,6 +592,16 @@ package ManaMason
 			{
 				rHUD.addChild(this.activeWallHelpers.movieClips[wmci]);
 			}
+			
+			infoPanel.reset();
+			infoPanel.isLocationLocked = true;
+			infoPanel.lockedX = 50;
+			infoPanel.lockedY = 8;
+			infoPanel.addTextfield(16777215, this.selectedBlueprint.name || "No blueprint", true, 13);
+			infoPanel.visible = true;
+			rHUD.addChild(infoPanel);
+			infoPanel.doEnterFrame();
+			//infoPanel.mouseEnabled = true;
 		}
 		
 		private function drawCaptureOverlay(e: MouseEvent): void
@@ -644,6 +658,7 @@ package ManaMason
 			var rHUD:Object = GV.ingameCore.cnt.cntRetinaHud;
 			rHUD.removeChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
 			rHUD.removeChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
+			rHUD.removeChild(infoPanel);
 			cleanupRetinaHud();
 			this.buildingMode = false;
 		}

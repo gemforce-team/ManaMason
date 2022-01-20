@@ -36,7 +36,7 @@ package ManaMason
 			this.gemTemplates = new Object();
 		}
 		
-		public static function fromFile(filePath:String): Blueprint
+		public static function fromFile(filePath:String, fileName: String = "Unnamed.txt"): Blueprint
 		{
 			var stream:FileStream = new FileStream();
 			try
@@ -44,8 +44,7 @@ package ManaMason
 				stream.open(new File(filePath), FileMode.READ);
 				var bpString:String = stream.readUTFBytes(stream.bytesAvailable);
 				stream.close();
-				
-				return fromString(bpString);
+				return fromString(bpString, fileName.split(".")[0]);
 			}
 			catch (e:Error)
 			{
@@ -56,7 +55,7 @@ package ManaMason
 			return emptyBlueprint;
 		}
 		
-		public static function fromString(bpString: String): Blueprint
+		public static function fromString(bpString: String, bpName: String): Blueprint
 		{
 			var result:Blueprint = new Blueprint();
 			var parts:Array = bpString.split("Gems:"+File.lineEnding);
@@ -66,7 +65,7 @@ package ManaMason
 				parseGemTemplates(parts[1].split(File.lineEnding), result);
 		
 			parseBlueprintGrid(grid, result);
-			
+			result.name = bpName;
 			return result;
 		}
 		
