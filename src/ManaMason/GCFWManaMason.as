@@ -123,7 +123,7 @@ package ManaMason
 			_crosshair = new Shape();
 			_lockedInfoPanel = new ManaMason.Utils.LockedInfoPanel(_baseInfoPanel);
 			infoPanel.setup(1920 - 1728, 670, 1728, 230, 4278190080);
-			infoPanel.basePanel.addEventListener(MouseEvent.CLICK, function(me:MouseEvent):void {GV.vfxEngine.createFloatingText4(400, 400, "InfoPanelCLicked!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13); });
+			//infoPanel.basePanel.addEventListener(MouseEvent.CLICK, function(me:MouseEvent):void {GV.vfxEngine.createFloatingText4(400, 400, "InfoPanelCLicked!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13); });
 		}
 		
 		private function registerDefaultSettings(): void
@@ -284,7 +284,8 @@ package ManaMason
 			ManaMasonMod.bezel.addEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
 			GV.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true, 10);
 			GV.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
-			GV.main.stage.addEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay, true, 10);
+			GV.main.stage.addEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
+			GV.main.stage.addEventListener(Event.ENTER_FRAME, drawBuildingOverlay);
 			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
 		}
 		
@@ -322,7 +323,8 @@ package ManaMason
 			ManaMasonMod.bezel.removeEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
 			GV.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
-			GV.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay, true);
+			GV.main.stage.removeEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
+			GV.main.stage.removeEventListener(Event.ENTER_FRAME, drawBuildingOverlay);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
 		}
 		
@@ -630,16 +632,16 @@ package ManaMason
 				if (this.currentBlueprintIndex == -1)
 				{
 					exitBuildingMode();
-					return;
 				}
-				drawBuildingOverlay();
-				return;
 			}
 		}
 		
-		private function drawBuildingOverlay(): void
+		private function drawBuildingOverlay(e: Event): void
 		{
+			if (!this.buildingMode)
+				return;
 			var rHUD:SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
+			rHUD.graphics.clear();
 			
 			var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
 			var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
@@ -713,10 +715,10 @@ package ManaMason
 			infoPanel.basePanel.addExtraHeight(10);
 			infoPanel.addOptions(blueprintOptions);
 			infoPanel.show();
-			infoPanel.basePanel.mouseEnabled = true;
+			infoPanel.basePanel.mouseEnabled = infoPanel.basePanel.mouseChildren = true;
 		}
 		
-		private function drawCaptureOverlay(e: MouseEvent): void
+		private function drawCaptureOverlay(e: Event): void
 		{
 			if (!this.captureMode)
 				return;
@@ -733,6 +735,7 @@ package ManaMason
 				mY < 8 + 1064)
 			{
 				var rHUD: SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
+				rHUD.removeChildren();
 				crosshair.graphics.clear();
 				crosshair.graphics.lineStyle(2, 0x00FF00, 1);
 				if (this.captureCorners[0] == null) {

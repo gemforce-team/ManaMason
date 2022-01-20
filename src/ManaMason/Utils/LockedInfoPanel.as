@@ -6,6 +6,7 @@ package ManaMason.Utils
 	import com.giab.games.gcfw.mcDyn.McInfoPanel;
 	import com.giab.games.gcfw.mcDyn.McOptPanel;
 	import flash.events.MouseEvent;
+	import flash.display.DisplayObject;
 	/**
 	 * ...
 	 * @author Hellrage
@@ -15,7 +16,7 @@ package ManaMason.Utils
 		public var lockedWidth: Number;
 		public var lockedHeight: Number;
 		public var lockedPlateColor: uint;
-		private var options: Object;
+		private var hasOptions:Boolean;
 		
 		public var basePanel: McInfoPanel;
 		
@@ -29,7 +30,7 @@ package ManaMason.Utils
 		{
 			this.basePanel.reset(lockedWidth || 280, lockedPlateColor);
 			this.basePanel.isLocationLocked = true;
-			this.options = new Object();
+			this.hasOptions = false;
 			if(lockedWidth > 0)
 				this.basePanel.w = lockedWidth;
 		}
@@ -44,7 +45,7 @@ package ManaMason.Utils
 			lockedReset();
 		}
 		
-		public function lockedDoEnterFrame(): void
+		public function lockedDoEnterFrame(... args): void
 		{
 			if(lockedHeight > 0)
 				this.basePanel.h = lockedHeight;
@@ -52,23 +53,33 @@ package ManaMason.Utils
 			this.basePanel.doEnterFrame();
 			this.basePanel.x = this.basePanel.lockedX;
 			this.basePanel.y = this.basePanel.lockedY;
-			this.basePanel.mouseEnabled = false;
 		}
 		
 		public function addOptions(options: BlueprintOptions): void
 		{
-			for each(var option: Object in options.options)
+			if (options.options.length != 0)
+			{
+				this.hasOptions = true;
+			}
+			for each(var option:Object in options.options)
 			{
 				var newMC: McOptPanel = new McOptPanel(option.name, 0, 0, false);
-				
+
+				var onBooleanMouseover:Function = function(e:MouseEvent):void
+				{
+					e.target.parent.plate.gotoAndStop(2);
+				};
+				var onBooleanMouseout:Function = function(e:MouseEvent):void
+				{
+					e.target.parent.plate.gotoAndStop(1);
+				};
 				var onBooleanClicked:Function = function(opt: Object): Function
 				{
 					return function(e: MouseEvent): void
 					{
-						GV.vfxEngine.createFloatingText4(400, 400, "OnBooleanClicked!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13);
 						var current:Boolean = opt.value;
 						opt.value = !current;
-						e.target.parent.btn.gotoAndStop(!current ? 2 : 1);
+						e.target.btn.gotoAndStop(!current ? 2 : 1);
 					};
 				}(option);
 				
@@ -84,9 +95,9 @@ package ManaMason.Utils
 				newMC.tf.scaleX = 0.65;
 				newMC.tf.width = basePanel.w - newMC.btn.width * newMC.btn.scaleX - 8;
 				newMC.btn.gotoAndStop(option.value ? 2 : 1);
-				newMC.plate.mouseEnabled = true;
-				newMC.plate.addEventListener(MouseEvent.CLICK, onBooleanClicked, true);
-				newMC.plate.addEventListener(MouseEvent.CLICK, function(mE:MouseEvent):void{GV.vfxEngine.createFloatingText4(400, 400, "OnBooleanClicked!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13);},true,99999 );
+				newMC.addEventListener(MouseEvent.MOUSE_OVER, onBooleanMouseover);
+				newMC.addEventListener(MouseEvent.MOUSE_OUT, onBooleanMouseout);
+				newMC.addEventListener(MouseEvent.MOUSE_DOWN, onBooleanClicked, false);
 				basePanel.addChild(newMC);
 			}
 		}
@@ -94,14 +105,30 @@ package ManaMason.Utils
 		public function show(): void
 		{
 			this.basePanel.visible = true;
-			GV.main.stage.addChild(this.basePanel);
+			GV.ingameCore.cnt.addChild(this.basePanel);
+			var children:Vector.<DisplayObject> = new <DisplayObject>[];
+			if (this.hasOptions)
+			{
+				for (var i:uint = 0; i < this.basePanel.numChildren; i++)
+				{
+					children.push(this.basePanel.getChildAt(i));
+				}
+				this.basePanel.removeChildren();
+			}
 			lockedDoEnterFrame();
+			if (this.hasOptions)
+			{
+				for (i = 0; i < children.length; i++)
+				{
+					this.basePanel.addChild(children[i]);
+				}
+			}
 		}
 		
 		public function hide(): void
 		{
 			this.basePanel.visible = false;
-			GV.main.stage.removeChild(this.basePanel);
+			GV.ingameCore.cnt.removeChild(this.basePanel);
 		}
 	}
 
