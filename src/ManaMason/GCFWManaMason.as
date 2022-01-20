@@ -260,6 +260,7 @@ package ManaMason
 			ManaMasonMod.bezel.addEventListener("ingameClickOnScene", eh_ingameClickOnScene);
 			ManaMasonMod.bezel.addEventListener("ingameRightClickOnScene", eh_ingameRightClickOnScene);
 			GV.ingameCore.cnt.addEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay);
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, false, 10);
 		}
 		
 		public function unload(): void
@@ -292,6 +293,7 @@ package ManaMason
 			ManaMasonMod.bezel.removeEventListener("ingameClickOnScene", eh_ingameClickOnScene);
 			ManaMasonMod.bezel.removeEventListener("ingameRightClickOnScene", eh_ingameRightClickOnScene);
 			GV.ingameCore.cnt.removeEventListener(MouseEvent.MOUSE_MOVE, drawCaptureOverlay);
+			GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, false);
 		}
 		
 		public function eh_interceptKeyboardEvent(e:Object): void
@@ -335,6 +337,8 @@ package ManaMason
 					}
 					else
 					{
+						
+						GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL,GV.ingameCore.inputHandler.ehWheel,true);
 						GV.ingameCore.controller.deselectEverything(true, true);
 					}
 				}
@@ -387,6 +391,17 @@ package ManaMason
 		{
 			this.captureMode = true;
 			GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Click top left and bottom right corners to capture structures!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
+		}
+		
+		public function eh_ingameWheelScrolled(e: MouseEvent): void
+		{
+			if (!buildingMode)
+				return;
+				
+			if (e.delta > 0)
+				cycleSelectedBlueprint( -1);
+			else
+				cycleSelectedBlueprint(1);
 		}
 		
 		public function eh_ingameClickOnScene(e:Object): void
@@ -661,6 +676,7 @@ package ManaMason
 			rHUD.removeChild(infoPanel);
 			cleanupRetinaHud();
 			this.buildingMode = false;
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, GV.ingameCore.inputHandler.ehWheel, true, 0, true);
 		}
 	}
 

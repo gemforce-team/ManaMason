@@ -138,8 +138,8 @@ By default ManaMason's hotkeys are:
 ```
 Ctrl+C - enter\exit capture mode
 Ctrl+V - enter\exit building mode
-PageUp or UpArrow - previous blueprint
-PageDown or DownArrow - next blueprint
+PageUp or MouseWheelUp - previous blueprint
+PageDown or MouseWheelDown - next blueprint
 R - rotate blueprint
 F - flip blueprint horizontally
 V - flip blueprint vertically
