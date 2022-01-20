@@ -18,8 +18,6 @@ https://github.com/gemforce-team/ManaMason/blob/master/Changelog.txt
 
 
 ## Known issues
-* Rotating\flipping the blueprints is a bit weird
-* Hotkeys aren't configurable
 * Line endings are expected to be system-appropriate (\r\n for Windows, \n for Linux and MacOS)
 
 
@@ -147,7 +145,7 @@ F - flip blueprint horizontally
 V - flip blueprint vertically
 Ctrl + R - reload blueprints
 ```
-These can be rebound using Bezel's hotkey manager, edit Local Store\Bezel Mod Loader\hotkeys.json to change them.
+These can be rebound using Bezel's hotkey manager, edit `%AppData%\com.giab.games.gcfw.steam\Local Store\Bezel Mod Loader\hotkeys.json` to change them.
 
 # Bug reports and feedback
 Please submit an issue to [The issue tracker](https://github.com/gemforce-team/ManaMason/issues) if you encounter a bug and there isn't already an open issue about it.
