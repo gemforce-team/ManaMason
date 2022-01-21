@@ -79,6 +79,13 @@ package ManaMason.Utils
 						var current:Boolean = opt.value;
 						opt.value = !current;
 						e.target.parent.btn.gotoAndStop(!current ? 2 : 1);
+						GV.ingameCore.controller.deselectEverything(true, true);
+						if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
+							GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
+						//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
+						//	rHUD.addChild(GV.ingameCore.cnt.bmpTowerPlaceAvailMap);
+						if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
+							GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
 					};
 				}(option);
 				
@@ -96,7 +103,7 @@ package ManaMason.Utils
 				newMC.btn.gotoAndStop(option.value ? 2 : 1);
 				newMC.addEventListener(MouseEvent.MOUSE_OVER, onBooleanMouseover);
 				newMC.addEventListener(MouseEvent.MOUSE_OUT, onBooleanMouseout);
-				newMC.addEventListener(MouseEvent.MOUSE_DOWN, onBooleanClicked, false);
+				newMC.addEventListener(MouseEvent.MOUSE_DOWN, onBooleanClicked);
 				basePanel.addChild(newMC);
 			}
 		}
