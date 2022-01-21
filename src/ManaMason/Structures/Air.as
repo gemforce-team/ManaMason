@@ -5,6 +5,7 @@ package ManaMason.Structures
 	 * @author Hellrage
 	 */
 	
+	import ManaMason.BlueprintOptions;
 	import ManaMason.Structure;
 	
 	public class Air extends Structure
@@ -19,6 +20,11 @@ package ManaMason.Structures
 			
 			this.buildingType = "AIR";
 			this.spellButtonIndex = -1;
+		}
+		
+		public override function castBuild(options: BlueprintOptions):void 
+		{
+			return;
 		}
 	}
 }

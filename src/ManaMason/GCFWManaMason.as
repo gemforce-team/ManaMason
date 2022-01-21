@@ -7,6 +7,7 @@ package ManaMason
 	
 	import Bezel.Utils.Keybind;
 	import Bezel.Utils.SettingManager;
+	import ManaMason.Utils.BlueprintOption;
 	import ManaMason.Utils.LockedInfoPanel;
 	import com.giab.common.abstract.SpriteExt;
 	import com.giab.games.gcfw.constants.IngameStatus;
@@ -642,8 +643,6 @@ package ManaMason
 			var rHUD:SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
 			var redColor:ColorTransform = new ColorTransform(1,0,0);
 			var whiteColor:ColorTransform = new ColorTransform(1,1,1);
-
-			var options:Object = blueprintOptions.optionsObject;
 			
 			var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
 			var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
@@ -667,14 +666,8 @@ package ManaMason
 				//ManaMasonMod.logger.log("eh_ingamePreRender", "Working ");
 				for each(var structure:Structure in this.selectedBlueprint.updateStructureCoords(mouseX, mouseY))
 				{
-					var placeable:Boolean = structure.placeable(blueprintOptions.optionsObject["Build on Path"]);
-					var dontPlaceDueToSettings:Boolean = (structure.type == "t" && !options["Place Towers"])
-														|| (structure.type == "w" && !options["Place Walls"])
-														|| (structure.type == "p" && !options["Place Pylons"])
-														|| (structure.type == "r" && !options["Place Traps"])
-														|| (structure.type == "l" && !options["Place Lanterns"])
-														|| (structure.type == "a" && !options["Place Amplifiers"]);
-					if (structure.fitsOnScene() && structure.type != "-" && !structure.rendered && ((placeable && !dontPlaceDueToSettings) || blueprintOptions.optionsObject["Show Unplaced"]))
+					var placeable: Boolean = structure.placeable(blueprintOptions, false);
+					if (structure.fitsOnScene() && structure.type != "-" && !structure.rendered && (placeable || blueprintOptions.options[BlueprintOption.SHOW_UNPLACED]))
 					{
 						if (structure.type == "w")
 						{
@@ -686,7 +679,7 @@ package ManaMason
 							activeWallHelpers.movieClips[activeWallHelpers.occupied].y = structure.buildingY;
 							activeWallHelpers.movieClips[activeWallHelpers.occupied].rotation = 0;
 							activeWallHelpers.movieClips[activeWallHelpers.occupied].gotoAndStop(1);
-							if (!placeable || dontPlaceDueToSettings)
+							if (!placeable)
 							{
 								activeWallHelpers.movieClips[activeWallHelpers.occupied].transform.colorTransform = redColor;
 							}
@@ -705,7 +698,7 @@ package ManaMason
 							}
 							typeBitmaps.bitmaps[typeBitmaps.occupied].x = structure.buildingX;
 							typeBitmaps.bitmaps[typeBitmaps.occupied].y = structure.buildingY;
-							if (!placeable || dontPlaceDueToSettings)
+							if (!placeable)
 							{
 								typeBitmaps.bitmaps[typeBitmaps.occupied].transform.colorTransform = redColor;
 							}

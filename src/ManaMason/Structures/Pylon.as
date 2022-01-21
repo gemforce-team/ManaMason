@@ -5,8 +5,11 @@ package ManaMason.Structures
 	 * @author Hellrage
 	 */
 	
+	import ManaMason.BlueprintOptions;
+	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gcfw.constants.BuildingType;
 	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.entity.Pylon;
 	
 	import ManaMason.Structure;
 	
@@ -27,24 +30,24 @@ package ManaMason.Structures
 			this.targetPriority = 0;
 		}
 		
-		public override function castBuild(buildOnPath:Boolean = true, insertGems:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
+		public override function castBuild(bpo: BlueprintOptions): void
 		{
 			var existingBuilding: Object = GV.ingameCore.buildingRegPtMatrix[buildingGridY][buildingGridX];
 			
-			if (existingBuilding is ManaMason.GCFWManaMason.structureClasses['p'])
+			if (existingBuilding is Pylon)
 			{
-				if (existingBuilding.insertedGem == null)
-					super.castBuild(spendMana, trackStats);
+				if (existingBuilding.insertedGem == null && bpo.read(BlueprintOption.CONJURE_GEMS))
+					super.castBuild(bpo);
 				return;
 			}
 			
-			if (spendMana && GV.ingameCore.getMana() < this.getCurrentManaCost())
+			if (bpo.read(BlueprintOption.SPEND_MANA) && GV.ingameCore.getMana() < this.getCurrentManaCost())
 				return;
 				
-			if (placeable(buildOnPath, true))
+			if (placeable(bpo, true))
 			{
 				GV.ingameCore.creator.buildPylon(buildingGridX, buildingGridY);
-				if (trackStats)
+				if (bpo.read(BlueprintOption.TRACK_STATS))
 				{
 					GV.ingameCore.stats.spentManaOnPylons += Math.max(0, this.getCurrentManaCost());
 				}
@@ -52,7 +55,7 @@ package ManaMason.Structures
 			else return;
 			
 			GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX].targetPriority = this.targetPriority;
-			if (spendMana)
+			if (bpo.read(BlueprintOption.SPEND_MANA))
 			{
 				GV.ingameCore.changeMana( -this.getCurrentManaCost(), false, true);
 				this.incrementManaCost();
@@ -84,13 +87,13 @@ package ManaMason.Structures
 				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX+1] == "#";
 		}
 
-		public override function placeable(pathAllowed:Boolean, finalCalculation:Boolean = false):Boolean
+		public override function placeable(bpo: BlueprintOptions, finalCalculation:Boolean = false):Boolean
 		{
-			if (!pathAllowed && isOnPath())
+			if (!bpo.read(BlueprintOption.BUILD_ON_PATH) && isOnPath())
 				return false;
 			if (!fitsOnScene())
 				return false;
-			return GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
+			return bpo.read(BlueprintOption.PLACE_PYLONS) && GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
 				&& (!finalCalculation || !GV.ingameCore.calculator.isNew2x2BuildingBlocking(buildingGridX, buildingGridY));
 		}
 	}

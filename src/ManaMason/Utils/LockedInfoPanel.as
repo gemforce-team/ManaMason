@@ -58,8 +58,10 @@ package ManaMason.Utils
 			{
 				this.hasOptions = true;
 			}
-			for each(var option:Object in options.options)
+			for each(var option:BlueprintOption in options.options)
 			{
+				if (!option.visible)
+					continue;
 				var newMC: McOptPanel = new McOptPanel(option.name, 0, 0, false);
 
 				var onBooleanMouseover:Function = function(e:MouseEvent):void
@@ -76,8 +78,7 @@ package ManaMason.Utils
 					{
 						var current:Boolean = opt.value;
 						opt.value = !current;
-						e.target.parent.btn.gotoAndStop(!current ? 2 : 1);
-						//redrawRetinaHud();
+						e.target.parent.btn.gotoAndStop(opt.value ? 2 : 1);
 					};
 				}(option);
 				

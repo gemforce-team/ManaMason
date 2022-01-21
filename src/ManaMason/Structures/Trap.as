@@ -5,8 +5,11 @@ package ManaMason.Structures
 	 * @author Hellrage
 	 */
 	
+	import ManaMason.BlueprintOptions;
+	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gcfw.constants.BuildingType;
 	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.entity.Trap;
 	
 	import ManaMason.GCFWManaMason;
 	import ManaMason.FakeGem;
@@ -26,36 +29,36 @@ package ManaMason.Structures
 			this.yOffset = 4;
 		}
 		
-		public override function castBuild(buildOnPath:Boolean = true, insertGems:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
+		public override function castBuild(bpo: BlueprintOptions): void
 		{
 			var existingBuilding: Object = GV.ingameCore.buildingRegPtMatrix[buildingGridY][buildingGridX];
 			
-			if (existingBuilding is ManaMason.GCFWManaMason.structureClasses['r'])
+			if (existingBuilding is Trap)
 			{
-				if (existingBuilding.insertedGem == null)
-					super.castBuild(buildOnPath, insertGems, spendMana, trackStats);
+				if (existingBuilding.insertedGem == null && bpo.read(BlueprintOption.CONJURE_GEMS))
+					super.castBuild(bpo);
 				return;
 			}
 			
-			if (spendMana && GV.ingameCore.getMana() < this.getCurrentManaCost())
+			if (bpo.read(BlueprintOption.SPEND_MANA) && GV.ingameCore.getMana() < this.getCurrentManaCost())
 				return;
 				
-			if (placeable(buildOnPath, true))
+			if (placeable(bpo, true))
 			{
 				GV.ingameCore.creator.buildTrap(buildingGridX, buildingGridY);
-				if (trackStats)
-				{
-					GV.ingameCore.stats.spentManaOnTraps += Math.max(0, this.getCurrentManaCost());
-				}
 			}
 			else return;
 			
-			if (spendMana)
+			if (bpo.read(BlueprintOption.SPEND_MANA))
 			{
 				GV.ingameCore.changeMana( -this.getCurrentManaCost(), false, true);
+				if (bpo.read(BlueprintOption.TRACK_STATS))
+				{
+					GV.ingameCore.stats.spentManaOnTraps += Math.max(0, this.getCurrentManaCost());
+				}
 				this.incrementManaCost();
 			}
-			super.castBuild(buildOnPath, insertGems, spendMana, trackStats);
+			super.castBuild(bpo);
 		}
 	
 		public override function incrementManaCost(): void
@@ -78,12 +81,12 @@ package ManaMason.Structures
 				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX+1] == "#";
 		}
 
-		public override function placeable(pathAllowed:Boolean, isFinalCalculation:Boolean = false):Boolean
+		public override function placeable(bpo: BlueprintOptions, isFinalCalculation:Boolean = false):Boolean
 		{
 			if (!fitsOnScene())
 				return false;
 			return GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
-				&& pathAllowed && GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX] == null
+				&& bpo.read(BlueprintOption.PLACE_TRAPS) && bpo.read(BlueprintOption.BUILD_ON_PATH) && GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX] == null
 				&& GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#"
 				&& GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX + 1] == null
 				&& GV.ingameCore.groundMatrix[buildingGridY][buildingGridX + 1] == "#"

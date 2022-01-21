@@ -5,6 +5,7 @@ package ManaMason
 	 * @author Hellrage
 	 */
 	
+	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gcfw.constants.GemEnhancementId;
 	import com.giab.games.gcfw.entity.Gem;
 	import com.giab.games.gcfw.GV;
@@ -20,7 +21,7 @@ package ManaMason
 			throw new IllegalOperationError("Illegal instantiation!");
 		}
 		
-		public static function CreateGemFromTemplate(template:FakeGem): Object
+		public static function CreateGemFromTemplate(template:FakeGem, bpo: BlueprintOptions): Object
 		{
 			if (template == null)
 				return null;
@@ -59,11 +60,13 @@ package ManaMason
 			{
 				if (!GV.ingameCore.arrIsSpellBtnVisible[template.gemType+6])
 					return null;
-				if (GV.ingameCore.getMana() < GV.ingameCore.gemCreatingBaseManaCosts[template.gemGrade])
+				if (bpo.read(BlueprintOption.SPEND_MANA) && GV.ingameCore.getMana() < GV.ingameCore.gemCreatingBaseManaCosts[template.gemGrade])
 					return null;
-				
+					
 				gem = GV.ingameCore.creator.createGem(template.gemGrade, template.gemType, true, true);
-				GV.ingameCore.changeMana( -GV.ingameCore.gemCreatingBaseManaCosts[template.gemGrade], false, true);
+				
+				if (bpo.read(BlueprintOption.SPEND_MANA))
+					GV.ingameCore.changeMana( -GV.ingameCore.gemCreatingBaseManaCosts[template.gemGrade], false, true);
 			}
 			
 			gem.targetPriority = template.targetPriority;

@@ -1,6 +1,8 @@
 package ManaMason 
 {
+	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.entity.Gem;
 	/**
 	 * ...
 	 * @author Hellrage
@@ -28,6 +30,7 @@ package ManaMason
 		public var spellButtonIndex:int;
 		
 		public var gemTemplate:FakeGem;
+		public var gem: Gem;
 		
 		public function Structure(type:String, bpIX:int, bpIY:int, gem:FakeGem = null) 
 		{
@@ -71,11 +74,11 @@ package ManaMason
 			this.blueprintIndexY = temp;
 		}
 		
-		public function castBuild(buidOnPath:Boolean = true, insertGems:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
+		public function castBuild(bpo: BlueprintOptions): void
 		{
-			if (insertGems)
+			if (bpo.read(BlueprintOption.CONJURE_GEMS))
 			{
-				this.insertGem(BuildHelper.CreateGemFromTemplate(this.gemTemplate));
+				this.insertGem(BuildHelper.CreateGemFromTemplate(this.gemTemplate, bpo));
 			}
 		}
 		
@@ -106,7 +109,7 @@ package ManaMason
 			return false;
 		}
 
-		public function placeable(pathAllowed:Boolean, isFinalCalculation:Boolean = false):Boolean
+		public function placeable(bpo: BlueprintOptions, isFinalCalculation:Boolean = false):Boolean
 		{
 			return true;
 		}
