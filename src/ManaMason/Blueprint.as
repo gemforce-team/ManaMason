@@ -9,9 +9,6 @@ package ManaMason
 	 
 	import ManaMason.Structures.Pylon;
 	import flash.filesystem.*;
-	import flash.utils.*;
-	import flash.display.Bitmap;
-	import ManaMason.BuildHelper;
 	
 	public class Blueprint 
 	{
@@ -358,13 +355,24 @@ package ManaMason
 			flipVertical();
 		}
 		
-		public function castBuild(buildOnPath:Boolean): void
+		public function castBuild(bpo:BlueprintOptions): void
 		{
+			var options:Object = bpo.optionsObject;
 			for each (var str:Structure in this.structures)
 			{
+				if (str.type == "-" ||
+					(str.type == "t" && !options["Place Towers"]) ||
+					(str.type == "w" && !options["Place Walls"]) ||
+					(str.type == "p" && !options["Place Pylons"]) ||
+					(str.type == "r" && !options["Place Traps"]) ||
+					(str.type == "l" && !options["Place Lanterns"]) ||
+					(str.type == "a" && !options["Place Amplifiers"]))
+				{
+					continue;
+				}
 				if (str.fitsOnScene() && GV.ingameCore.arrIsSpellBtnVisible[str.spellButtonIndex])
 				{
-					str.castBuild(buildOnPath);
+					str.castBuild(options["Build on Path"], options["Conjure Gems"]);
 				}
 			}
 			GV.ingameCore.renderer2.redrawHighBuildings();

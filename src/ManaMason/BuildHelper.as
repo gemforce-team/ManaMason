@@ -9,7 +9,6 @@ package ManaMason
 	import com.giab.games.gcfw.entity.Gem;
 	import com.giab.games.gcfw.GV;
 	
-	import flash.display.Bitmap;
 	import flash.errors.IllegalOperationError;
 	
 	public class BuildHelper 

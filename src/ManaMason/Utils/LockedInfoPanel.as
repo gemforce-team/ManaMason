@@ -1,7 +1,6 @@
 package ManaMason.Utils 
 {
 	import ManaMason.BlueprintOptions;
-	import ManaMason.ManaMasonMod;
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.mcDyn.McInfoPanel;
 	import com.giab.games.gcfw.mcDyn.McOptPanel;
@@ -86,11 +85,11 @@ package ManaMason.Utils
 				newMC.y = basePanel.nextTfPos;
 				newMC.x = 4;
 				basePanel.addExtraHeight(32);
-				newMC.plate.width = basePanel.w - 8;
+				newMC.plate.width = basePanel.w - 32;
 				newMC.plate.height = 30;
-				newMC.btn.x = basePanel.w - newMC.btn.width - 8;
 				newMC.btn.scaleX = 0.7;
 				newMC.btn.scaleY = 0.7;
+				newMC.btn.x = newMC.plate.width - newMC.btn.width - 8;
 				newMC.tf.scaleY = 0.65;
 				newMC.tf.scaleX = 0.65;
 				newMC.tf.width = basePanel.w - newMC.btn.width * newMC.btn.scaleX - 8;
@@ -105,7 +104,6 @@ package ManaMason.Utils
 		public function show(): void
 		{
 			this.basePanel.visible = true;
-			GV.ingameCore.cnt.addChild(this.basePanel);
 			var children:Vector.<DisplayObject> = new <DisplayObject>[];
 			if (this.hasOptions)
 			{
@@ -123,6 +121,7 @@ package ManaMason.Utils
 					this.basePanel.addChild(children[i]);
 				}
 			}
+			GV.ingameCore.cnt.addChild(this.basePanel);
 		}
 		
 		public function hide(): void

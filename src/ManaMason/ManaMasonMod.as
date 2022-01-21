@@ -6,7 +6,6 @@ package ManaMason
 	import Bezel.Logger;
 	
 	import flash.display.MovieClip;
-	import flash.utils.getQualifiedClassName;
 	/**
 	 * ...
 	 * @author Hellrage

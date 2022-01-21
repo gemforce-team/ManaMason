@@ -1,9 +1,5 @@
 package ManaMason 
 {
-	import adobe.utils.CustomActions;
-	import flash.display.Bitmap;
-	import flash.utils.*;
-	
 	import com.giab.games.gcfw.GV;
 	/**
 	 * ...
@@ -75,9 +71,12 @@ package ManaMason
 			this.blueprintIndexY = temp;
 		}
 		
-		public function castBuild(buidOnPath:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
+		public function castBuild(buidOnPath:Boolean = true, insertGems:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
 		{
-			this.insertGem(BuildHelper.CreateGemFromTemplate(this.gemTemplate));
+			if (insertGems)
+			{
+				this.insertGem(BuildHelper.CreateGemFromTemplate(this.gemTemplate));
+			}
 		}
 		
 		public function toString(): String
@@ -100,6 +99,16 @@ package ManaMason
 			if (gem == null)
 				return;
 			GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX].insertGem(gem);
+		}
+
+		public function isOnPath(): Boolean
+		{
+			return false;
+		}
+
+		public function placeable(pathAllowed:Boolean, isFinalCalculation:Boolean = false):Boolean
+		{
+			return true;
 		}
 	}
 
