@@ -9,7 +9,6 @@ package ManaMason.Structures
 	import com.giab.games.gcfw.GV;
 	
 	import ManaMason.GCFWManaMason;
-	import ManaMason.BuildHelper;
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
 	
@@ -27,45 +26,27 @@ package ManaMason.Structures
 			this.yOffset = 4;
 		}
 		
-		public override function castBuild(buildOnPath:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
+		public override function castBuild(buildOnPath:Boolean = true, insertGems:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
 		{
 			var existingBuilding: Object = GV.ingameCore.buildingRegPtMatrix[buildingGridY][buildingGridX];
 			
 			if (existingBuilding is ManaMason.GCFWManaMason.structureClasses['r'])
 			{
 				if (existingBuilding.insertedGem == null)
-					super.castBuild(spendMana, trackStats);
+					super.castBuild(buildOnPath, insertGems, spendMana, trackStats);
 				return;
 			}
 			
 			if (spendMana && GV.ingameCore.getMana() < this.getCurrentManaCost())
 				return;
 				
-			if (!buildOnPath && (
-				GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#" ||
-				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX] == "#" ||
-				GV.ingameCore.groundMatrix[buildingGridY][buildingGridX+1] == "#" ||
-				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX+1] == "#"))
-				return;
-				
-			if (GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType))
+			if (placeable(buildOnPath, true))
 			{
-				if (GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX] == null
-						&& GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#"
-						&& GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX + 1] == null
-						&& GV.ingameCore.groundMatrix[buildingGridY][buildingGridX + 1] == "#"
-						&& GV.ingameCore.buildingAreaMatrix[buildingGridY + 1][buildingGridX] == null
-						&& GV.ingameCore.groundMatrix[buildingGridY + 1][buildingGridX] == "#"
-						&& GV.ingameCore.buildingAreaMatrix[buildingGridY + 1][buildingGridX + 1] == null
-						&& GV.ingameCore.groundMatrix[buildingGridY + 1][buildingGridX + 1] == "#")
-					{
-						GV.ingameCore.creator.buildTrap(buildingGridX, buildingGridY);
-						if (trackStats)
-						{
-							GV.ingameCore.stats.spentManaOnTraps += Math.max(0, this.getCurrentManaCost());
-						}
+				GV.ingameCore.creator.buildTrap(buildingGridX, buildingGridY);
+				if (trackStats)
+				{
+					GV.ingameCore.stats.spentManaOnTraps += Math.max(0, this.getCurrentManaCost());
 				}
-				else return;
 			}
 			else return;
 			
@@ -74,7 +55,7 @@ package ManaMason.Structures
 				GV.ingameCore.changeMana( -this.getCurrentManaCost(), false, true);
 				this.incrementManaCost();
 			}
-			super.castBuild(spendMana, trackStats);
+			super.castBuild(buildOnPath, insertGems, spendMana, trackStats);
 		}
 	
 		public override function incrementManaCost(): void
@@ -85,6 +66,31 @@ package ManaMason.Structures
 		public override function getCurrentManaCost(): Number
 		{
 			return GV.ingameCore.currentTrapBuildingManaCost.g();
+		}
+
+		public override function isOnPath():Boolean
+		{
+			if (!fitsOnScene())
+				return false;
+			return GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#" ||
+				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX] == "#" ||
+				GV.ingameCore.groundMatrix[buildingGridY][buildingGridX+1] == "#" ||
+				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX+1] == "#";
+		}
+
+		public override function placeable(pathAllowed:Boolean, isFinalCalculation:Boolean = false):Boolean
+		{
+			if (!fitsOnScene())
+				return false;
+			return GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
+				&& !pathAllowed && GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX] == null
+				&& GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#"
+				&& GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX + 1] == null
+				&& GV.ingameCore.groundMatrix[buildingGridY][buildingGridX + 1] == "#"
+				&& GV.ingameCore.buildingAreaMatrix[buildingGridY + 1][buildingGridX] == null
+				&& GV.ingameCore.groundMatrix[buildingGridY + 1][buildingGridX] == "#"
+				&& GV.ingameCore.buildingAreaMatrix[buildingGridY + 1][buildingGridX + 1] == null
+				&& GV.ingameCore.groundMatrix[buildingGridY + 1][buildingGridX + 1] == "#";
 		}
 	}
 

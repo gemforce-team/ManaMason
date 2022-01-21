@@ -1,7 +1,6 @@
 package ManaMason.Utils 
 {
 	import ManaMason.BlueprintOptions;
-	import ManaMason.ManaMasonMod;
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.mcDyn.McInfoPanel;
 	import com.giab.games.gcfw.mcDyn.McOptPanel;
@@ -80,24 +79,31 @@ package ManaMason.Utils
 						var current:Boolean = opt.value;
 						opt.value = !current;
 						e.target.parent.btn.gotoAndStop(!current ? 2 : 1);
+						GV.ingameCore.controller.deselectEverything(true, true);
+						if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
+							GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
+						//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
+						//	rHUD.addChild(GV.ingameCore.cnt.bmpTowerPlaceAvailMap);
+						if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
+							GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
 					};
 				}(option);
 				
 				newMC.y = basePanel.nextTfPos;
 				newMC.x = 4;
 				basePanel.addExtraHeight(32);
-				newMC.plate.width = basePanel.w - 8;
+				newMC.plate.width = basePanel.w - 32;
 				newMC.plate.height = 30;
-				newMC.btn.x = basePanel.w - newMC.btn.width - 8;
 				newMC.btn.scaleX = 0.7;
 				newMC.btn.scaleY = 0.7;
+				newMC.btn.x = newMC.plate.width - newMC.btn.width - 8;
 				newMC.tf.scaleY = 0.65;
 				newMC.tf.scaleX = 0.65;
 				newMC.tf.width = basePanel.w - newMC.btn.width * newMC.btn.scaleX - 8;
 				newMC.btn.gotoAndStop(option.value ? 2 : 1);
 				newMC.addEventListener(MouseEvent.MOUSE_OVER, onBooleanMouseover);
 				newMC.addEventListener(MouseEvent.MOUSE_OUT, onBooleanMouseout);
-				newMC.addEventListener(MouseEvent.MOUSE_DOWN, onBooleanClicked, false);
+				newMC.addEventListener(MouseEvent.MOUSE_DOWN, onBooleanClicked);
 				basePanel.addChild(newMC);
 			}
 		}
@@ -105,7 +111,6 @@ package ManaMason.Utils
 		public function show(): void
 		{
 			this.basePanel.visible = true;
-			GV.ingameCore.cnt.addChild(this.basePanel);
 			var children:Vector.<DisplayObject> = new <DisplayObject>[];
 			if (this.hasOptions)
 			{
@@ -123,6 +128,7 @@ package ManaMason.Utils
 					this.basePanel.addChild(children[i]);
 				}
 			}
+			GV.ingameCore.cnt.addChild(this.basePanel);
 		}
 		
 		public function hide(): void

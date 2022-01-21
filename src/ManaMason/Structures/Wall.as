@@ -10,7 +10,6 @@ package ManaMason.Structures
 	 
 	import ManaMason.GCFWManaMason;
 	import ManaMason.Structure;
-	import flash.utils.getDefinitionByName;
 	
 	public class Wall extends Structure
 	{
@@ -25,20 +24,15 @@ package ManaMason.Structures
 			this.yOffset = 0;
 		}
 		
-		public override function castBuild(buildOnPath:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
+		public override function castBuild(buildOnPath:Boolean = true, insertGems:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
 		{
 			if (spendMana && GV.ingameCore.getMana() < this.getCurrentManaCost())
 				return;
 				
-			if (!buildOnPath && GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#")
-				return;
-				
-			if (GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType))
+			if (placeable(buildOnPath))
 			{
 				if (this.type == "w")
 				{
-					if (GV.ingameCore.calculator.isNewWallBlocking(buildingGridX, buildingGridX, buildingGridY, buildingGridY))// (this.buildingX, this.buildingX, this.buildingY, this.buildingY))
-						return;
 					if(!(GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX] is ManaMason.GCFWManaMason.structureClasses['w']))
 					{
 						GV.ingameCore.creator.buildWall(buildingGridX, buildingGridY);
@@ -69,6 +63,23 @@ package ManaMason.Structures
 		public override function insertGem(gem:Object): void
 		{
 			
+		}
+
+		public override function isOnPath():Boolean
+		{
+			if (!fitsOnScene())
+				return false;
+			return GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#";
+		}
+
+		public override function placeable(pathAllowed:Boolean, isFinalCalculation:Boolean = false):Boolean
+		{
+			if (!pathAllowed && isOnPath())
+				return false;
+			if (!fitsOnScene())
+				return false;
+			return GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
+				&& (!isFinalCalculation || !GV.ingameCore.calculator.isNewWallBlocking(buildingGridX, buildingGridX, buildingGridY, buildingGridY));
 		}
 	}
 

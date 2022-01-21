@@ -25,38 +25,27 @@ package ManaMason.Structures
 			this.spellButtonIndex = 13;
 		}
 		
-		public override function castBuild(buildOnPath:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
+		public override function castBuild(buildOnPath:Boolean = true, insertGems:Boolean = true, spendMana:Boolean = true, trackStats:Boolean = false): void
 		{
 			var existingBuilding: Object = GV.ingameCore.buildingRegPtMatrix[buildingGridY][buildingGridX];
 			
 			if (existingBuilding is ManaMason.GCFWManaMason.structureClasses['t'])
 			{
 				if (existingBuilding.insertedGem == null)
-					super.castBuild(spendMana, trackStats);
+					super.castBuild(buildOnPath, insertGems, spendMana, trackStats);
 				return;
 			}
 			
 			if (spendMana && GV.ingameCore.getMana() < this.getCurrentManaCost())
 				return;
 				
-			if (!buildOnPath && (
-				GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#" ||
-				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX] == "#" ||
-				GV.ingameCore.groundMatrix[buildingGridY][buildingGridX+1] == "#" ||
-				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX+1] == "#"))
-				return;
-				
-			if (GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType))
+			if (placeable(buildOnPath, true))
 			{
-				if (!GV.ingameCore.calculator.isNew2x2BuildingBlocking(buildingGridX, buildingGridY))
+				GV.ingameCore.creator.buildTower(buildingGridX, buildingGridY);
+				if (trackStats)
 				{
-					GV.ingameCore.creator.buildTower(buildingGridX, buildingGridY);
-					if (trackStats)
-					{
-						GV.ingameCore.stats.spentManaOnTowers += Math.max(0, this.getCurrentManaCost());
-					}
+					GV.ingameCore.stats.spentManaOnTowers += Math.max(0, this.getCurrentManaCost());
 				}
-				else return;
 			}
 			else return;
 			
@@ -65,7 +54,7 @@ package ManaMason.Structures
 				GV.ingameCore.changeMana( -this.getCurrentManaCost(), false, true);
 				this.incrementManaCost();
 			}
-			super.castBuild(spendMana, trackStats);
+			super.castBuild(buildOnPath, insertGems, spendMana, trackStats);
 		}
 	
 		public override function incrementManaCost(): void
@@ -76,6 +65,26 @@ package ManaMason.Structures
 		public override function getCurrentManaCost(): Number
 		{
 			return GV.ingameCore.currentTowerBuildingManaCost.g();
+		}
+
+		public override function isOnPath():Boolean
+		{
+			if (!fitsOnScene())
+				return false;
+			return GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#" ||
+				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX] == "#" ||
+				GV.ingameCore.groundMatrix[buildingGridY][buildingGridX+1] == "#" ||
+				GV.ingameCore.groundMatrix[buildingGridY+1][buildingGridX+1] == "#";
+		}
+
+		public override function placeable(pathAllowed:Boolean, finalCalculation:Boolean = false):Boolean
+		{
+			if (!pathAllowed && isOnPath())
+				return false;
+			if (!fitsOnScene())
+				return false;
+			return GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
+				&& (!finalCalculation || !GV.ingameCore.calculator.isNew2x2BuildingBlocking(buildingGridX, buildingGridY));
 		}
 	}
 
