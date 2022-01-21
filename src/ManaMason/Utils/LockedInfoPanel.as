@@ -79,13 +79,7 @@ package ManaMason.Utils
 						var current:Boolean = opt.value;
 						opt.value = !current;
 						e.target.parent.btn.gotoAndStop(!current ? 2 : 1);
-						GV.ingameCore.controller.deselectEverything(true, true);
-						if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
-							GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
-						//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
-						//	rHUD.addChild(GV.ingameCore.cnt.bmpTowerPlaceAvailMap);
-						if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
-							GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
+						//redrawRetinaHud();
 					};
 				}(option);
 				
@@ -104,8 +98,20 @@ package ManaMason.Utils
 				newMC.addEventListener(MouseEvent.MOUSE_OVER, onBooleanMouseover);
 				newMC.addEventListener(MouseEvent.MOUSE_OUT, onBooleanMouseout);
 				newMC.addEventListener(MouseEvent.MOUSE_DOWN, onBooleanClicked);
+				basePanel.addEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
 				basePanel.addChild(newMC);
 			}
+		}
+		
+		private function redrawRetinaHud(...args): void
+		{
+			GV.ingameCore.controller.deselectEverything(true, true);
+			if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
+				GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
+			//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
+			//	rHUD.addChild(GV.ingameCore.cnt.bmpTowerPlaceAvailMap);
+			if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
+				GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
 		}
 		
 		public function show(): void
