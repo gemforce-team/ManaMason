@@ -10,8 +10,8 @@ package ManaMason.Structures
 	import com.giab.games.gcfw.constants.BuildingType;
 	import com.giab.games.gcfw.GV;
 	 
-	import ManaMason.GCFWManaMason;
 	import ManaMason.Structure;
+	import com.giab.games.gcfw.entity.Wall;
 	
 	public class Wall extends Structure
 	{
@@ -33,7 +33,7 @@ package ManaMason.Structures
 				
 			if (placeable(bpo, true))
 			{
-				if(!(GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX] is Wall))
+				if(!(GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX] is com.giab.games.gcfw.entity.Wall))
 				{
 					GV.ingameCore.creator.buildWall(buildingGridX, buildingGridY);
 				}

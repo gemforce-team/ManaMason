@@ -11,7 +11,6 @@ package ManaMason.Structures
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.entity.Trap;
 	
-	import ManaMason.GCFWManaMason;
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
 	
@@ -33,7 +32,7 @@ package ManaMason.Structures
 		{
 			var existingBuilding: Object = GV.ingameCore.buildingRegPtMatrix[buildingGridY][buildingGridX];
 			
-			if (existingBuilding is Trap)
+			if (existingBuilding is com.giab.games.gcfw.entity.Trap)
 			{
 				if (existingBuilding.insertedGem == null && bpo.read(BlueprintOption.CONJURE_GEMS))
 					super.castBuild(bpo);

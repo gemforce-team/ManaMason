@@ -32,7 +32,7 @@ package ManaMason.Structures
 		{
 			var existingBuilding: Object = GV.ingameCore.buildingRegPtMatrix[buildingGridY][buildingGridX];
 			
-			if (existingBuilding is Lantern)
+			if (existingBuilding is com.giab.games.gcfw.entity.Lantern)
 			{
 				if (existingBuilding.insertedGem == null && bpo.read(BlueprintOption.CONJURE_GEMS))
 					super.castBuild(bpo);

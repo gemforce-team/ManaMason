@@ -32,7 +32,7 @@ package ManaMason.Structures
 		{
 			var existingBuilding: Object = GV.ingameCore.buildingRegPtMatrix[buildingGridY][buildingGridX];
 			
-			if (existingBuilding is Amplifier)
+			if (existingBuilding is com.giab.games.gcfw.entity.Amplifier)
 			{
 				if (existingBuilding.insertedGem == null && bpo.read(BlueprintOption.CONJURE_GEMS))
 					super.castBuild(bpo);
