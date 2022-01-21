@@ -29,7 +29,7 @@ package ManaMason.Structures
 			if (spendMana && GV.ingameCore.getMana() < this.getCurrentManaCost())
 				return;
 				
-			if (placeable(buildOnPath))
+			if (placeable(buildOnPath, true))
 			{
 				if (this.type == "w")
 				{
