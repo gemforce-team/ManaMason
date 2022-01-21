@@ -279,6 +279,8 @@ package ManaMason
 			GV.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
 			GV.main.stage.addEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
 			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
+			GV.main.stage.addEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
+			this.infoPanel.basePanel.addEventListener(MouseEvent.MOUSE_DOWN, this.infoPanel.redrawRetinaHud);
 		}
 		
 		private function eh_discardAllMouseInput(e:MouseEvent):void
@@ -317,6 +319,8 @@ package ManaMason
 			GV.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
 			GV.main.stage.removeEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
+			GV.main.stage.removeEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
+			this.infoPanel.basePanel.removeEventListener(MouseEvent.MOUSE_DOWN, this.infoPanel.redrawRetinaHud);
 		}
 		
 		public function eh_interceptKeyboardEvent(e:Object): void

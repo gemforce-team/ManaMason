@@ -4,6 +4,7 @@ package ManaMason.Utils
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.mcDyn.McInfoPanel;
 	import com.giab.games.gcfw.mcDyn.McOptPanel;
+	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.display.DisplayObject;
 	/**
@@ -16,6 +17,8 @@ package ManaMason.Utils
 		public var lockedHeight: Number;
 		public var lockedPlateColor: uint;
 		private var hasOptions:Boolean;
+		private var _resizeHandler: Function;
+		public function get resizeHandler(): Function {return _resizeHandler};
 		
 		public var basePanel: McInfoPanel;
 		
@@ -23,15 +26,7 @@ package ManaMason.Utils
 		{
 			super();
 			this.basePanel = panel;
-		}
-		
-		public function lockedReset(): void
-		{
-			this.basePanel.reset(lockedWidth || 280, lockedPlateColor);
-			this.basePanel.isLocationLocked = true;
-			this.hasOptions = false;
-			if(lockedWidth > 0)
-				this.basePanel.w = lockedWidth;
+			this._resizeHandler = resizeOptionPanelsHandler();
 		}
 		
 		public function setup(width: Number, height: Number, lockedX: Number, lockedY: Number, plateColor: uint): void
@@ -41,7 +36,10 @@ package ManaMason.Utils
 			this.basePanel.lockedX = lockedX;
 			this.basePanel.lockedY = lockedY;
 			this.lockedPlateColor = plateColor;
-			lockedReset();
+			this.basePanel.reset(lockedWidth, lockedPlateColor);
+			this.basePanel.isLocationLocked = true;
+			this.hasOptions = false;
+			this.basePanel.w = lockedWidth;
 		}
 		
 		public function lockedDoEnterFrame(... args): void
@@ -66,11 +64,11 @@ package ManaMason.Utils
 
 				var onBooleanMouseover:Function = function(e:MouseEvent):void
 				{
-					e.target.parent.plate.gotoAndStop(2);
+					e.target.gotoAndStop(2);
 				};
 				var onBooleanMouseout:Function = function(e:MouseEvent):void
 				{
-					e.target.parent.plate.gotoAndStop(1);
+					e.target.gotoAndStop(1);
 				};
 				var onBooleanClicked:Function = function(opt: Object): Function
 				{
@@ -83,27 +81,18 @@ package ManaMason.Utils
 					};
 				}(option);
 				
-				newMC.y = basePanel.nextTfPos;
-				newMC.x = 4;
-				basePanel.addExtraHeight(32);
-				newMC.plate.width = basePanel.w - 32;
-				newMC.plate.height = 30;
-				newMC.btn.scaleX = 0.7;
-				newMC.btn.scaleY = 0.7;
-				newMC.btn.x = newMC.plate.width - newMC.btn.width - 8;
-				newMC.tf.scaleY = 0.65;
-				newMC.tf.scaleX = 0.65;
-				newMC.tf.width = basePanel.w - newMC.btn.width * newMC.btn.scaleX - 8;
+				setPanelPositionAndSize(newMC, lockedWidth, basePanel.nextTfPos, scaleFactor());
+				basePanel.addExtraHeight(newMC.plate.height + 2);
+				
 				newMC.btn.gotoAndStop(option.value ? 2 : 1);
-				newMC.addEventListener(MouseEvent.MOUSE_OVER, onBooleanMouseover);
-				newMC.addEventListener(MouseEvent.MOUSE_OUT, onBooleanMouseout);
+				newMC.plate.addEventListener(MouseEvent.MOUSE_OVER, onBooleanMouseover);
+				newMC.plate.addEventListener(MouseEvent.MOUSE_OUT, onBooleanMouseout);
 				newMC.addEventListener(MouseEvent.MOUSE_DOWN, onBooleanClicked);
-				basePanel.addEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
 				basePanel.addChild(newMC);
 			}
 		}
 		
-		private function redrawRetinaHud(...args): void
+		public function redrawRetinaHud(...args): void
 		{
 			GV.ingameCore.controller.deselectEverything(true, true);
 			if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
@@ -112,6 +101,47 @@ package ManaMason.Utils
 			//	rHUD.addChild(GV.ingameCore.cnt.bmpTowerPlaceAvailMap);
 			if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
 				GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
+		}
+		
+		private function resizeOptionPanelsHandler(): Function
+		{
+			var self: LockedInfoPanel = this;
+			return function(e:Event): void {
+				if (hasOptions)
+				{
+					var stageHeight: Number = GV.main.stage.stageHeight;
+					var stageWidth: Number = GV.main.stage.stageWidth;
+					for (var i:uint = 0; i < self.basePanel.numChildren; i++)
+					{
+						var option: McOptPanel = self.basePanel.getChildAt(i) as McOptPanel;
+						if(option != null)
+							setPanelPositionAndSize(option, self.lockedWidth, i * 30 + 10, scaleFactor());
+					}
+				}
+			}
+		}
+		
+		private function scaleFactor(): Number
+		{
+			var stageH: Number = GV.main.stage.stageHeight;
+			var stageW: Number = GV.main.stage.stageWidth;
+			
+			var scaleH: Number = stageH / 1080;
+			var scaleW: Number = stageW / 1920;
+			return Math.min(scaleH, scaleW);
+		}
+		
+		private function setPanelPositionAndSize(oMC: McOptPanel, baseWidth: Number, startingY: Number, scaleFactor: Number): void
+		{
+			oMC.y = startingY;
+			oMC.x = 4;
+			oMC.plate.width = baseWidth * scaleFactor  - 8;
+			oMC.plate.height = 30 * scaleFactor;
+			oMC.btn.scaleX = 0.7 * scaleFactor;
+			oMC.btn.scaleY = 0.7 * scaleFactor;
+			oMC.btn.x = baseWidth * scaleFactor - 16 - oMC.btn.width;
+			oMC.tf.scaleX = oMC.tf.scaleY = oMC.plate.scaleX * 1.3;
+			
 		}
 		
 		public function show(): void
