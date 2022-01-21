@@ -83,7 +83,7 @@ package ManaMason.Structures
 			if (!fitsOnScene())
 				return false;
 			return GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
-				&& !pathAllowed && GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX] == null
+				&& pathAllowed && GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX] == null
 				&& GV.ingameCore.groundMatrix[buildingGridY][buildingGridX] == "#"
 				&& GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX + 1] == null
 				&& GV.ingameCore.groundMatrix[buildingGridY][buildingGridX + 1] == "#"
