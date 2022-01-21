@@ -14,9 +14,9 @@ package ManaMason.Structures
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
 	
-	public class Lantern extends Structure
+	public class LanternStruct extends Structure
 	{
-		public function Lantern(bpIX:int, bpIY:int, gem:FakeGem = null) 
+		public function LanternStruct(bpIX:int, bpIY:int, gem:FakeGem = null) 
 		{
 			super("l", bpIX, bpIY, gem);
 			this.rendered = false;

@@ -8,9 +8,9 @@ package ManaMason.Structures
 	import ManaMason.BlueprintOptions;
 	import ManaMason.Structure;
 	
-	public class Air extends Structure
+	public class AirStruct extends Structure
 	{
-		public function Air(bpIX:int, bpIY:int) 
+		public function AirStruct(bpIX:int, bpIY:int) 
 		{
 			super("-", bpIX, bpIY);
 			this.rendered = true;

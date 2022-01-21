@@ -9,32 +9,30 @@ package ManaMason.Structures
 	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gcfw.constants.BuildingType;
 	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.entity.Pylon;
+	import com.giab.games.gcfw.entity.Tower;
 	
+	import ManaMason.FakeGem;
 	import ManaMason.Structure;
 	
-	public class Pylon extends Structure
+	public class TowerStruct extends Structure
 	{
-		public var targetPriority:int;
-		
-		public function Pylon(bpIX:int, bpIY:int) 
+		public function TowerStruct(bpIX:int, bpIY:int, gem:FakeGem = null) 
 		{
-			super("p", bpIX, bpIY);
+			super("t", bpIX, bpIY, gem);
 			this.rendered = false;
 			this.size = 2;
 			this.xOffset = -4;
 			this.yOffset = -5;
-			
-			this.buildingType = BuildingType.PYLON;
-			this.spellButtonIndex = 17;
-			this.targetPriority = 0;
+				
+			this.buildingType = BuildingType.TOWER;
+			this.spellButtonIndex = 13;
 		}
 		
 		public override function castBuild(bpo: BlueprintOptions): void
 		{
 			var existingBuilding: Object = GV.ingameCore.buildingRegPtMatrix[buildingGridY][buildingGridX];
 			
-			if (existingBuilding is Pylon)
+			if (existingBuilding is Tower)
 			{
 				if (existingBuilding.insertedGem == null && bpo.read(BlueprintOption.CONJURE_GEMS))
 					super.castBuild(bpo);
@@ -46,35 +44,30 @@ package ManaMason.Structures
 				
 			if (placeable(bpo, true))
 			{
-				GV.ingameCore.creator.buildPylon(buildingGridX, buildingGridY);
+				GV.ingameCore.creator.buildTower(buildingGridX, buildingGridY);
 				if (bpo.read(BlueprintOption.TRACK_STATS))
 				{
-					GV.ingameCore.stats.spentManaOnPylons += Math.max(0, this.getCurrentManaCost());
+					GV.ingameCore.stats.spentManaOnTowers += Math.max(0, this.getCurrentManaCost());
 				}
 			}
 			else return;
 			
-			GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX].targetPriority = this.targetPriority;
 			if (bpo.read(BlueprintOption.SPEND_MANA))
 			{
 				GV.ingameCore.changeMana( -this.getCurrentManaCost(), false, true);
 				this.incrementManaCost();
 			}
+			super.castBuild(bpo);
 		}
 	
 		public override function incrementManaCost(): void
 		{
-			GV.ingameCore.currentPylonBuildingManaCost.s(Math.round(GV.PYLON_COST_MULT.g() * (GV.ingameCore.currentPylonBuildingManaCost.g() + Math.round(GV.PYLON_COST_INCREMENT.g()))));
+			GV.ingameCore.currentTowerBuildingManaCost.s(GV.ingameCore.currentTowerBuildingManaCost.g() + Math.round(GV.TOWER_COST_INCREMENT.g()));
 		}
 		
 		public override function getCurrentManaCost(): Number
 		{
-			return GV.ingameCore.currentPylonBuildingManaCost.g();
-		}
-		
-		public override function insertGem(gem:Object): void
-		{
-			
+			return GV.ingameCore.currentTowerBuildingManaCost.g();
 		}
 
 		public override function isOnPath():Boolean
@@ -93,7 +86,7 @@ package ManaMason.Structures
 				return false;
 			if (!fitsOnScene())
 				return false;
-			return bpo.read(BlueprintOption.PLACE_PYLONS) && GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
+			return bpo.read(BlueprintOption.PLACE_TOWERS) && GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
 				&& (!finalCalculation || !GV.ingameCore.calculator.isNew2x2BuildingBlocking(buildingGridX, buildingGridY));
 		}
 	}

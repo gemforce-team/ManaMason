@@ -9,30 +9,30 @@ package ManaMason.Structures
 	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gcfw.constants.BuildingType;
 	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.entity.Tower;
+	import com.giab.games.gcfw.entity.Amplifier;
 	
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
 	
-	public class Tower extends Structure
+	public class AmplifierStruct extends Structure
 	{
-		public function Tower(bpIX:int, bpIY:int, gem:FakeGem = null) 
+		public function AmplifierStruct(bpIX:int, bpIY:int, gem:FakeGem = null) 
 		{
-			super("t", bpIX, bpIY, gem);
+			super("a", bpIX, bpIY, gem);
 			this.rendered = false;
 			this.size = 2;
 			this.xOffset = -4;
 			this.yOffset = -5;
-				
-			this.buildingType = BuildingType.TOWER;
-			this.spellButtonIndex = 13;
+			
+			this.buildingType = BuildingType.AMPLIFIER;
+			this.spellButtonIndex = 14;
 		}
 		
 		public override function castBuild(bpo: BlueprintOptions): void
 		{
 			var existingBuilding: Object = GV.ingameCore.buildingRegPtMatrix[buildingGridY][buildingGridX];
 			
-			if (existingBuilding is Tower)
+			if (existingBuilding is Amplifier)
 			{
 				if (existingBuilding.insertedGem == null && bpo.read(BlueprintOption.CONJURE_GEMS))
 					super.castBuild(bpo);
@@ -44,10 +44,10 @@ package ManaMason.Structures
 				
 			if (placeable(bpo, true))
 			{
-				GV.ingameCore.creator.buildTower(buildingGridX, buildingGridY);
+				GV.ingameCore.creator.buildAmplifier(buildingGridX, buildingGridY);
 				if (bpo.read(BlueprintOption.TRACK_STATS))
 				{
-					GV.ingameCore.stats.spentManaOnTowers += Math.max(0, this.getCurrentManaCost());
+					GV.ingameCore.stats.spentManaOnAmplifiers += Math.max(0, this.getCurrentManaCost());
 				}
 			}
 			else return;
@@ -62,12 +62,12 @@ package ManaMason.Structures
 	
 		public override function incrementManaCost(): void
 		{
-			GV.ingameCore.currentTowerBuildingManaCost.s(GV.ingameCore.currentTowerBuildingManaCost.g() + Math.round(GV.TOWER_COST_INCREMENT.g()));
+			GV.ingameCore.currentAmplifierBuildingManaCost.s(GV.ingameCore.currentAmplifierBuildingManaCost.g() + Math.round(GV.AMPLIFIER_COST_INCREMENT.g()));
 		}
 		
 		public override function getCurrentManaCost(): Number
 		{
-			return GV.ingameCore.currentTowerBuildingManaCost.g();
+			return GV.ingameCore.currentAmplifierBuildingManaCost.g();
 		}
 
 		public override function isOnPath():Boolean
@@ -86,7 +86,7 @@ package ManaMason.Structures
 				return false;
 			if (!fitsOnScene())
 				return false;
-			return bpo.read(BlueprintOption.PLACE_TOWERS) && GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
+			return bpo.read(BlueprintOption.PLACE_AMPLIFIERS) && GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)
 				&& (!finalCalculation || !GV.ingameCore.calculator.isNew2x2BuildingBlocking(buildingGridX, buildingGridY));
 		}
 	}

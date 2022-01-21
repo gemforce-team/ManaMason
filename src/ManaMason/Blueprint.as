@@ -7,7 +7,7 @@ package ManaMason
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.entity.Orblet;
 	 
-	import ManaMason.Structures.Pylon;
+	import ManaMason.Structures.PylonStruct;
 	import flash.filesystem.*;
 	
 	public class Blueprint 
@@ -95,7 +95,7 @@ package ManaMason
 								{
 									if (structure.type == "p")
 									{
-										var pylon:Pylon = structure as Pylon;
+										var pylon:PylonStruct = structure as PylonStruct;
 										pylon.targetPriority = gemId;
 									}
 									else

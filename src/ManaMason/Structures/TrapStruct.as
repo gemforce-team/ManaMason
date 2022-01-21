@@ -15,9 +15,9 @@ package ManaMason.Structures
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
 	
-	public class Trap extends Structure
+	public class TrapStruct extends Structure
 	{
-		public function Trap(bpIX:int, bpIY:int, gem:FakeGem = null) 
+		public function TrapStruct(bpIX:int, bpIY:int, gem:FakeGem = null) 
 		{
 			super("r", bpIX, bpIY, gem);
 			this.rendered = false;

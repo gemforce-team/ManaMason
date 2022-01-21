@@ -9,13 +9,14 @@ package ManaMason.Structures
 	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gcfw.constants.BuildingType;
 	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.entity.Wall;
 	 
 	import ManaMason.GCFWManaMason;
 	import ManaMason.Structure;
 	
-	public class Wall extends Structure
+	public class WallStruct extends Structure
 	{
-		public function Wall(bpIX:int, bpIY:int) 
+		public function WallStruct(bpIX:int, bpIY:int) 
 		{
 			super("w", bpIX, bpIY);
 			this.rendered = false;
