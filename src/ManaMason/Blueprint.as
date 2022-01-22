@@ -27,6 +27,8 @@ package ManaMason
 		
 		public var structures:Array;
 		public var gemTemplates:Object;
+		public var dimX:Number;
+		public var dimY:Number;
 		
 		private static var activeBitmaps:Object;
 		private static var activeWallHelpers:Object;
@@ -101,6 +103,8 @@ package ManaMason
 		
 		private static function parseBlueprintGrid(grid:Array, res:Blueprint): Blueprint
 		{
+			res.dimX = grid[0].length;
+			res.dimY = grid.length;
 			for (var c:int = 0; c < grid[0].length; c++)
 			{
 				for (var r:int = 0; r < grid.length; r++)
@@ -386,11 +390,7 @@ package ManaMason
 		{
 			for each (var struct:Structure in this.structures)
 			{
-				struct.flipHorizontal(this.structureGrid.length);
-			}
-			for each (var row:Array in this.structureGrid)
-			{
-				row.reverse();
+				struct.flipHorizontal(this.dimX);
 			}
 		}
 		
@@ -398,28 +398,20 @@ package ManaMason
 		{
 			for each (var struct:Structure in this.structures)
 			{
-				//ManaMason.ManaMason.logger.log("flipVertical", "Flipping..." + struct.toString());
-				struct.flipVertical(this.structureGrid[0].length);
-				//ManaMason.ManaMason.logger.log("flipVertical", "Flipped..." + struct.toString());
+				struct.flipVertical(this.dimY);
 			}
-			this.structureGrid.reverse();
 		}
 		
 		public function rotate(): void
 		{
 			for each (var struct:Structure in this.structures)
-				struct.transpose();
-			var newGrid:Array = new Array();
-			for (var row:int = 0; row < this.structureGrid.length; row++)
 			{
-				for (var column:int = 0; column < this.structureGrid[row].length; column++)
-				{
-					if (newGrid[column] == undefined)
-						newGrid.push(new Array());
-					newGrid[column][row] = this.structureGrid[row][column];
-				}
+				struct.transpose();
+				
 			}
-			this.structureGrid = newGrid;
+			var temp: Number = this.dimY;
+			this.dimY = this.dimX;
+			this.dimX = temp;
 			flipVertical();
 		}
 		
@@ -560,9 +552,11 @@ package ManaMason
 		public static function tryCaptureFromField(captureCorners: Object): Blueprint
 		{
 			var grid:Object = GV.ingameCore.buildingAreaMatrix;
+			var regGrid:Object = GV.ingameCore.buildingRegPtMatrix;
 			var tileProcessed: Boolean = false;
-			var structureString: String = "";
-			
+			var bp: Blueprint = new Blueprint();
+			bp.dimX = captureCorners[1][0] - captureCorners[0][0] + 1;
+			bp.dimY = captureCorners[1][1] - captureCorners[0][1] + 1;
 			for (var i:int = captureCorners[0][1]; i <= captureCorners[1][1]; i++) 
 			{
 				for (var j:int = captureCorners[0][0]; j <= captureCorners[1][0]; j++) 
@@ -570,27 +564,29 @@ package ManaMason
 					tileProcessed = false;
 					for (var type:String in GCFWManaMason.structureClasses)
 					{
-						if (grid[i][j] is GCFWManaMason.structureClasses[type]){
-							structureString += type;
+						if (grid[i][j] is GCFWManaMason.structureClasses[type] && regGrid[i][j] == grid[i][j])
+						{
 							tileProcessed = true;
+							var struct: Structure = StructureFactory.CreateStructure(type, j - captureCorners[0][0], i - captureCorners[0][1]);
+							if (grid[i][j].hasOwnProperty("insertedGem"))
+								struct.gem = grid[i][j].insertedGem;
+							bp.structures.push(struct);
 							break;
 						}
 					}
 					
 					if (!tileProcessed)
 					{
-						structureString += "-";
+						bp.structures.push(StructureFactory.CreateStructure("-", j - captureCorners[0][0], i - captureCorners[0][1]));
 					}
 				}
-				structureString += "\r\n";
 			}
-			var capturedBP: Blueprint = Blueprint.fromString(structureString, "Captured BP");
-			exportBlueprintFile(structureString);
+			exportBlueprintFile(bp);
 			GV.vfxEngine.createFloatingText4(GV.main.mouseX, GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20), "Blueprint captured!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13);
-			return capturedBP;
+			return bp;
 		}
 		
-		private static function exportBlueprintFile(bpString: String): void
+		private static function exportBlueprintFile(bp: Blueprint): void
 		{
 			var blueprintsFolder:File = GCFWManaMason.storage.resolvePath("blueprints");
 			var bpFile:File = blueprintsFolder.resolvePath("capturedBP.txt");
@@ -598,7 +594,7 @@ package ManaMason
 			try
 			{
 				bpWriter.open(bpFile, FileMode.WRITE);
-				bpWriter.writeUTFBytes(bpString);
+				bpWriter.writeUTFBytes(bp.exportToString());
 			}
 			catch (err:Error)
 			{
@@ -606,16 +602,26 @@ package ManaMason
 			}
 		}
 		
-		public function ExportToString(): String
+		public function exportToString(): String
 		{
 			var res:String = "";
-			for each (var row:Array in this.structureGrid)
+			
+			var grid: Object = new Object();
+			for (var row: Number = 0; row < this.dimY; row++)
+				grid[row] = new Object();
+			
+			for(var struct:Object in this.structures) 
 			{
-				res += "\n";
-				for each (var str:Structure in row)
+				grid[this.structures[struct].blueprintY][this.structures[struct].blueprintX] = this.structures[struct].type;
+			}
+			
+			for (var i:Number = 0; i < this.dimY; i++) 
+			{
+				for (var j:Number = 0; j < this.dimX; j++) 
 				{
-					res += str.type;
+					res += grid[i][j];
 				}
+				res += "\r\n";
 			}
 			return res;
 		}

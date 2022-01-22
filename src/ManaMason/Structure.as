@@ -16,6 +16,8 @@ package ManaMason
 		
 		protected var blueprintIndexX:int;
 		protected var blueprintIndexY:int;
+		public function get blueprintX():Number {return this.blueprintIndexX};
+		public function get blueprintY():Number {return this.blueprintIndexY};
 		
 		public var buildingGridX:int;
 		public var buildingGridY:int;
@@ -42,6 +44,7 @@ package ManaMason
 			this.blueprintIndexY = bpIY;
 			setBuildingCoords(50, 8);
 			this.gemTemplate = gem;
+			this.gem = null;
 		}
 		
 		public function fitsOnScene(): Boolean
@@ -70,7 +73,7 @@ package ManaMason
 		
 		public function flipVertical(rowCount:int): void
 		{
-			this.blueprintIndexY = rowCount - 1 - this.blueprintIndexY - (this.size -1);
+			this.blueprintIndexY = rowCount - 1 - this.blueprintIndexY - (this.size - 1);
 		}
 		
 		public function transpose(): void
@@ -84,7 +87,12 @@ package ManaMason
 		{
 			if (bpo.read(BlueprintOption.CONJURE_GEMS))
 			{
-				this.insertGem(BuildHelper.CreateGemFromTemplate(this.gemTemplate, bpo));
+				var newGem: Gem;
+				if (this.gem != null)
+					newGem = BuildHelper.dupeGem(bpo, this.gem);
+				else
+					newGem = BuildHelper.CreateGemFromTemplate(this.gemTemplate, bpo);
+				this.insertGem(newGem);
 			}
 		}
 		
