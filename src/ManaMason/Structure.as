@@ -3,6 +3,7 @@ package ManaMason
 	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.entity.Gem;
+	import flash.display.MovieClip;
 	/**
 	 * ...
 	 * @author Hellrage
@@ -11,6 +12,7 @@ package ManaMason
 	public class Structure 
 	{
 		public var type:String;
+		public var ghost:Object;
 		
 		protected var blueprintIndexX:int;
 		protected var blueprintIndexY:int;
@@ -23,6 +25,7 @@ package ManaMason
 		
 		public var rendered:Boolean;
 		public var size:int;
+		
 		protected var xOffset:int;
 		protected var yOffset:int;
 		
@@ -37,12 +40,15 @@ package ManaMason
 			this.type = type;
 			this.blueprintIndexX = bpIX;
 			this.blueprintIndexY = bpIY;
+			setBuildingCoords(50, 8);
 			this.gemTemplate = gem;
 		}
 		
 		public function fitsOnScene(): Boolean
 		{
-			return (this.buildingX <= 50 + 1680 - 28*this.size + this.xOffset) && (this.buildingX >= 50 + this.xOffset) && (this.buildingY <= 8 + 1064 - 28*this.size + this.yOffset) && (this.buildingY >= 8 + this.yOffset);
+			var bX: Number = this.buildingGridX + (this.size - 1);
+			var bY: Number = this.buildingGridY + (this.size - 1);
+			return this.buildingGridX >= 0 && bX < 60 && this.buildingGridY >= 0 && bY < 38;
 		}
 		
 		public function setBuildingCoords(mouseX:Number, mouseY:Number): void
@@ -50,8 +56,8 @@ package ManaMason
 			var vX:Number = Math.floor((mouseX - 50) / 28);
 			var vY:Number = Math.floor((mouseY - 8) / 28);
 			
-			this.buildingGridX = Math.max(0,Math.floor((mouseX - 50) / 28)) + this.blueprintIndexX;
-			this.buildingGridY = Math.max(0, Math.floor((mouseY - 8) / 28)) + this.blueprintIndexY;
+			this.buildingGridX = vX + this.blueprintIndexX;
+			this.buildingGridY = vY + this.blueprintIndexY;
 			
 			this.buildingX = 50 + 28 * this.buildingGridX + xOffset;
 			this.buildingY = 8 + 28 * this.buildingGridY + yOffset;

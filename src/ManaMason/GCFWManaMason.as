@@ -5,6 +5,7 @@ package ManaMason
 	 * @author Hellrage
 	 */
 	
+	import Bezel.GCFW.GCFWBezel;
 	import Bezel.Utils.Keybind;
 	import Bezel.Utils.SettingManager;
 	import ManaMason.Utils.BlueprintOption;
@@ -24,7 +25,6 @@ package ManaMason
 	import com.giab.games.gcfw.SB;
 	import com.giab.games.gcfw.mcDyn.McInfoPanel;
 	
-	import flash.display.Bitmap;
 	import flash.display.MovieClip;
 	import flash.filesystem.*;
 	import flash.events.*;
@@ -38,10 +38,9 @@ package ManaMason
 		public static var structureClasses: Object;
 		
 		private var blueprints:Array;
-		private var activeBitmaps:Object;
-		private var activeWallHelpers:Object;
 		private var selectedBlueprint:Blueprint;
 		private var currentBlueprintIndex:int;
+		private var mouseMoveBPUpdateHandler:Function;
 		
 		private var buildingMode:Boolean;
 		private var captureMode:Boolean;
@@ -98,13 +97,19 @@ package ManaMason
 			
 			registerKeybinds();
 			
-			initActiveBitmaps();
-			
-			initBuildingHelpers();
-			
 			prepareFolders();
 			
 			reloadBlueprintList();
+			
+			var self: GCFWManaMason = this;
+			this.mouseMoveBPUpdateHandler = function(e: MouseEvent):void {
+				if (self.buildingMode)
+				{
+					self.updateBPOrigin(e.stageX, e.stageY);
+					self.redrawRetinaHud();
+				}
+				
+			};
 			
 			addEventListeners();
 			
@@ -137,31 +142,13 @@ package ManaMason
 			// GemsmithMod.bezel.keybindManager.registerHotkey("Gemsmith: Conjure gem", 89);
 		}
 		
-		private function initBuildingHelpers(): void
-		{
-			BuildHelper.bitmaps = new Object();
-			var buildHelperBitmaps:Object = BuildHelper.bitmaps;
-			buildHelperBitmaps["a"] = GV.ingameCore.cnt.bmpBuildHelperAmp;
-			buildHelperBitmaps["t"] = GV.ingameCore.cnt.bmpBuildHelperTower;
-			buildHelperBitmaps["r"] = GV.ingameCore.cnt.bmpBuildHelperTrap;
-			buildHelperBitmaps["p"] = GV.ingameCore.cnt.bmpBuildHelperPylon;
-			buildHelperBitmaps["l"] = GV.ingameCore.cnt.bmpBuildHelperLantern;
-		}
-		
-		private function initActiveBitmaps(): void
-		{
-			this.activeBitmaps = new Object();
-			this.activeBitmaps["a"] = {"occupied":0, "bitmaps": new Array()};
-			this.activeBitmaps["t"] = {"occupied":0, "bitmaps": new Array()};
-			this.activeBitmaps["r"] = {"occupied":0, "bitmaps": new Array()};
-			this.activeBitmaps["p"] = {"occupied":0, "bitmaps": new Array()};
-			this.activeBitmaps["l"] = {"occupied":0, "bitmaps": new Array()};
-			
-			this.activeWallHelpers = {"occupied":0, "movieClips": new Array()};
-		}
-		
 		private function reloadBlueprintList(): void
 		{
+			if(this.buildingMode)
+				exitBuildingMode();
+			if (this.captureMode)
+				exitCaptureMode();
+			
 			var newBlueprints: Array = new Array();
 			var blueprintsFolder:File = storage.resolvePath("blueprints");
 			
@@ -173,7 +160,7 @@ package ManaMason
 				{
 					var blueprint:Blueprint = Blueprint.fromFile(blueprintsFolder.resolvePath(fileName).nativePath, fileName);
 					if(blueprint != Blueprint.emptyBlueprint)
-						newBlueprints.push(blueprint);
+						newBlueprints.push(blueprint.setBlueprintOptions(blueprintOptions));
 					else
 					{
 						SB.playSound("sndalert");
@@ -210,35 +197,13 @@ package ManaMason
 			else if(this.currentBlueprintIndex > blueprints.length - 1)
 				this.currentBlueprintIndex = 0;
 				
+			GV.main.stage.removeChild(this.selectedBlueprint);
 			this.selectedBlueprint = this.blueprints[this.currentBlueprintIndex];
-			this.eh_ingamePreRenderInfoPanel(null);
+			this.selectedBlueprint.resetGhosts();
+			this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+			GV.main.stage.addChild(this.selectedBlueprint);
+			drawBuildingOverlay(null);
 		}
-		
-		/*private function checkForUpdates(): void
-		{
-			if(!this.configuration["Check for updates"])
-				return;
-			
-			logger.log("CheckForUpdates", "Mod version: " + prettyVersion());
-			logger.log("CheckForUpdates", "Checking for updates...");
-			var repoAddress:String = "https://api.github.com/repos/gemforce-team/gemsmith/releases/latest";
-			var request:URLRequest = new URLRequest(repoAddress);
-			
-			var loader:URLLoader = new URLLoader();
-			var localThis:Gemsmith = this;
-			
-			loader.addEventListener(Event.COMPLETE, function(e:Event): void {
-				var latestTag:Object = JSON.parse(loader.data).tag_name;
-				var latestVersion:String = latestTag.replace(/[v]/gim, ' ').split('-')[0];
-				localThis.updateAvailable = (latestVersion != VERSION);
-				logger.log("CheckForUpdates", localThis.updateAvailable ? "Update available! " + latestTag : "Using the latest version: " + latestTag);
-			});
-			loader.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent): void {
-				logger.log("CheckForUpdates", "Caught an error when checking for updates!");
-			});
-			
-			loader.load(request);
-		}*/
 		
 		private function prepareFolders(): void
 		{
@@ -274,14 +239,14 @@ package ManaMason
 		
 		private function addEventListeners(): void
 		{
-			ManaMasonMod.bezel.addEventListener("ingamePreRenderInfoPanel", eh_ingamePreRenderInfoPanel);
 			ManaMasonMod.bezel.addEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
+			GV.main.stage.addEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
 			GV.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true, 10);
 			GV.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
 			GV.main.stage.addEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
 			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
 			GV.main.stage.addEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
-			this.infoPanel.basePanel.addEventListener(MouseEvent.MOUSE_DOWN, this.infoPanel.redrawRetinaHud);
+			this.infoPanel.basePanel.addEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
 		}
 		
 		private function eh_discardAllMouseInput(e:MouseEvent):void
@@ -300,28 +265,22 @@ package ManaMason
 				}
 			}*/
 			
-			for each (var mc:Object in this.activeWallHelpers.movieClips)
-			{
-				mc.stop();
-				mc = null;
-			}
-			
-			this.activeWallHelpers = {"occupied":0, "movieClips": new Array()};
-			
 			if(this.buildingMode)
 				exitBuildingMode();
+				
+			Blueprint.cleanup();
 		}
 		
 		private function removeEventListeners(): void
 		{
-			ManaMasonMod.bezel.removeEventListener("ingamePreRenderInfoPanel", eh_ingamePreRenderInfoPanel);
 			ManaMasonMod.bezel.removeEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
+			GV.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
 			GV.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
 			GV.main.stage.removeEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
 			GV.main.stage.removeEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
-			this.infoPanel.basePanel.removeEventListener(MouseEvent.MOUSE_DOWN, this.infoPanel.redrawRetinaHud);
+			this.infoPanel.basePanel.removeEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
 		}
 		
 		public function eh_interceptKeyboardEvent(e:Object): void
@@ -367,7 +326,6 @@ package ManaMason
 					enterBuildingMode();
 					drawBuildingOverlay(null);
 				}
-				eh_ingamePreRenderInfoPanel(null);
 				e.eventArgs.continueDefault = !this.buildingMode;
 				return;
 			}
@@ -377,7 +335,6 @@ package ManaMason
 				SB.playSound("sndalert");
 				GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Reloading blueprints!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
 				e.eventArgs.continueDefault = false;
-				eh_ingamePreRenderInfoPanel(null);
 				return;
 			}
 			
@@ -394,20 +351,20 @@ package ManaMason
 				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Flip blueprint vertically").matches(pE))
 				{
 					this.selectedBlueprint.flipVertical();
+					this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
 					e.eventArgs.continueDefault = false;
-					this.eh_ingamePreRenderInfoPanel(null);
 				}
 				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Flip blueprint horizontally").matches(pE))
 				{
 					this.selectedBlueprint.flipHorizontal();
+					this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
 					e.eventArgs.continueDefault = false;
-					this.eh_ingamePreRenderInfoPanel(null);
 				}
 				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Rotate blueprint").matches(pE))
 				{
 					this.selectedBlueprint.rotate();
+					this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
 					e.eventArgs.continueDefault = false;
-					this.eh_ingamePreRenderInfoPanel(null);
 				}
 			}
 		}
@@ -431,6 +388,9 @@ package ManaMason
 			{
 				this.buildingMode = true;
 				GV.mcInfoPanel.visible = false;
+				this.selectedBlueprint.resetGhosts();
+				this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+				GV.main.stage.addChild(this.selectedBlueprint);
 				//discardAllMouseInput();
 				GV.ingameCore.controller.deselectEverything(true, true);
 			}
@@ -537,6 +497,10 @@ package ManaMason
 					exitCaptureMode();
 				}
 			}
+			else
+				return;
+				
+			mE.stopImmediatePropagation();
 		}
 		
 		public function rightClickOnScene(mE:MouseEvent): void
@@ -579,7 +543,7 @@ package ManaMason
 				}
 				structureString += "\r\n";
 			}
-			var capturedBP: Blueprint = Blueprint.fromString(structureString, "Captured BP");
+			var capturedBP: Blueprint = Blueprint.fromString(structureString, "Captured BP").setBlueprintOptions(blueprintOptions);
 			blueprints.unshift(capturedBP);
 			currentBlueprintIndex = 0;
 			selectedBlueprint = blueprints[currentBlueprintIndex];
@@ -614,125 +578,37 @@ package ManaMason
 			crosshair.graphics.clear();
 		}
 		
-		public function eh_ingamePreRenderInfoPanel(e:Object): void
-		{
-			cleanupRetinaHud();
-			
-			for each (var bitmapType:Object in this.activeBitmaps)
-			{
-				bitmapType.occupied = 0;
-			}
-			this.activeWallHelpers.occupied = 0;
-			
-			if (this.buildingMode)
-			{
-				if (this.currentBlueprintIndex == -1)
-				{
-					exitBuildingMode();
-					return;
-				}
-				drawBuildingOverlay(null);
-				return;
-			}
-		}
-		
 		private function drawBuildingOverlay(e: Event): void
 		{
 			if (!this.buildingMode)
 				return;
-			var rHUD:SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
-			var redColor:ColorTransform = new ColorTransform(1,0,0);
-			var whiteColor:ColorTransform = new ColorTransform(1,1,1);
-			
-			var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
-			var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
-			if (GV.main.cntScreens.cntIngame.root.mouseX > 50 && GV.main.cntScreens.cntIngame.root.mouseX < 50 + 1680 && GV.main.cntScreens.cntIngame.root.mouseY > 8 && GV.main.cntScreens.cntIngame.root.mouseY < 8 + 1064)
-			{
-				var vX:Number = Math.floor((mouseX - 50) / 28);
-				var vY:Number = Math.floor((mouseY - 8) / 28);
 				
-				GV.ingameCore.lastZoneXMin = 50 + 28 * vX;
-				GV.ingameCore.lastZoneXMax = 50 + 28 + 28 * vX;
-				GV.ingameCore.lastZoneYMin = 8 + 28 * vY;
-				GV.ingameCore.lastZoneYMax = 8 + 28 + 28 * vY;
-				
-				if(!rHUD.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
-					rHUD.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
-				//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
-				//	rHUD.addChild(GV.ingameCore.cnt.bmpTowerPlaceAvailMap);
-				if(!rHUD.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
-					rHUD.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
-				
-				//ManaMasonMod.logger.log("eh_ingamePreRender", "Working ");
-				for each(var structure:Structure in this.selectedBlueprint.updateStructureCoords(mouseX, mouseY))
-				{
-					var placeable: Boolean = structure.placeable(blueprintOptions, false);
-					if (structure.fitsOnScene() && structure.type != "-" && !structure.rendered && (placeable || blueprintOptions.options[BlueprintOption.SHOW_UNPLACED]))
-					{
-						if (structure.type == "w")
-						{
-							if (activeWallHelpers.occupied >= activeWallHelpers.movieClips.length)
-							{
-								activeWallHelpers.movieClips.push(new McBuildWallHelper());
-							}
-							activeWallHelpers.movieClips[activeWallHelpers.occupied].x = structure.buildingX;
-							activeWallHelpers.movieClips[activeWallHelpers.occupied].y = structure.buildingY;
-							activeWallHelpers.movieClips[activeWallHelpers.occupied].rotation = 0;
-							activeWallHelpers.movieClips[activeWallHelpers.occupied].gotoAndStop(1);
-							if (!placeable)
-							{
-								activeWallHelpers.movieClips[activeWallHelpers.occupied].transform.colorTransform = redColor;
-							}
-							else
-							{
-								activeWallHelpers.movieClips[activeWallHelpers.occupied].transform.colorTransform = whiteColor;
-							}
-							activeWallHelpers.occupied++;
-						}
-						else
-						{
-							var typeBitmaps:Object = this.activeBitmaps[structure.type];
-							if (typeBitmaps.occupied >= typeBitmaps.bitmaps.length)
-							{
-								typeBitmaps.bitmaps.push(new Bitmap(BuildHelper.bitmaps[structure.type].bitmapData));
-							}
-							typeBitmaps.bitmaps[typeBitmaps.occupied].x = structure.buildingX;
-							typeBitmaps.bitmaps[typeBitmaps.occupied].y = structure.buildingY;
-							if (!placeable)
-							{
-								typeBitmaps.bitmaps[typeBitmaps.occupied].transform.colorTransform = redColor;
-							}
-							else
-							{
-								typeBitmaps.bitmaps[typeBitmaps.occupied].transform.colorTransform = whiteColor;
-							}
-							typeBitmaps.occupied++;
-						}
-						structure.rendered = true;
-					}
-				}
-				
-				for each (var type:Object in this.activeBitmaps)
-				{
-					for (var i:int = 0; i < type.occupied; i++)
-					{
-						rHUD.addChild(type.bitmaps[i]);
-					}
-				}
-				
-				for (var wmci:int = 0; wmci < this.activeWallHelpers.occupied; wmci++)
-				{
-					rHUD.addChild(this.activeWallHelpers.movieClips[wmci]);
-				}
-			
-			}
+			redrawRetinaHud();
 			
 			infoPanel.setup(1920 - 1728, 670, 1728, 230, 4278190080);
-			infoPanel.basePanel.addTextfield(16777215, this.selectedBlueprint.name || "No blueprint", true, 11);
+			infoPanel.basePanel.addTextfield(16777215, this.selectedBlueprint.blueprintName || "No blueprint", true, 11);
 			infoPanel.basePanel.addExtraHeight(10);
 			infoPanel.addOptions(blueprintOptions);
 			infoPanel.show();
 			infoPanel.basePanel.mouseEnabled = infoPanel.basePanel.mouseChildren = true;
+		}
+		
+		public function redrawRetinaHud(...args): void
+		{
+			GV.ingameCore.controller.deselectEverything(true, true);
+				
+			var rHUD:SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
+				
+			if(!rHUD.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
+				rHUD.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
+			if(!rHUD.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
+				rHUD.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
+		}
+		
+		public function updateBPOrigin(mX: Number, mY: Number): void
+		{
+			if(this.buildingMode)
+				this.selectedBlueprint.updateOrigin(mX, mY);
 		}
 		
 		private function drawCaptureOverlay(e: Event): void
@@ -778,30 +654,6 @@ package ManaMason
 			infoPanel.show();
 		}
 		
-		private function cleanupRetinaHud(): void
-		{
-			var rHUD: SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
-			//ManaMasonMod.logger.log("cleanupRetinaHud", "Cleaning up...");
-			for each (var bitmapType: Object in this.activeBitmaps)
-			{
-				for each (var bitmap: Bitmap in bitmapType.bitmaps)
-				{
-					rHUD.removeChild(bitmap);
-				}
-			}
-			
-			for each (var wallMC: MovieClip in this.activeWallHelpers.movieClips)
-			{
-				rHUD.removeChild(wallMC);
-			}
-			
-			for each(var baseBitmap: Bitmap in BuildHelper.bitmaps)
-			{
-				rHUD.removeChild(baseBitmap);
-			}
-			//GV.ingameCore.controller.deselectEverything(true,true);
-		}
-		
 		private function exitBuildingMode(): void
 		{
 			var rHUD:Object = GV.ingameCore.cnt.cntRetinaHud;
@@ -810,7 +662,7 @@ package ManaMason
 			infoPanel.hide();
 			restoreAllMouseInput();
 			GV.mcInfoPanel.visible = true;
-			cleanupRetinaHud();
+			GV.main.stage.removeChild(this.selectedBlueprint);
 			this.buildingMode = false;
 		}
 	}

@@ -6,15 +6,30 @@ package ManaMason
 	 */
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.entity.Orblet;
+	import com.giab.games.gcfw.mcDyn.McBuildWallHelper;
+	import flash.display.Bitmap;
+	import flash.display.MovieClip;
+	import flash.geom.ColorTransform;
 	 
 	import ManaMason.Structures.PylonStruct;
+	import ManaMason.BlueprintOptions;
+	import ManaMason.Utils.BlueprintOption;
 	import flash.filesystem.*;
 	
-	public class Blueprint 
+	public class Blueprint extends MovieClip
 	{
 		private var structureGrid:Array;
+		private var blueprintOptions: BlueprintOptions;
+		private var lastOrigin: Object;
+		
+		private static var redColor:ColorTransform = new ColorTransform(1, 0, 0);
+		private static var whiteColor:ColorTransform = new ColorTransform(1, 1, 1);
+		
 		public var structures:Array;
 		public var gemTemplates:Object;
+		
+		private static var activeBitmaps:Object;
+		private static var activeWallHelpers:Object;
 		private static var buildHelperBitmaps:Object;
 		private static var allowedSymbols:Array = ["-", "a", "t", "w", "p", "l", "r"];
 		
@@ -24,13 +39,25 @@ package ManaMason
 			return _emptyBlueprint || new Blueprint();
 		}
 		
-		public var name:String;
+		public var blueprintName:String;
 		
 		public function Blueprint() 
 		{
+			super();
+			
+			if (activeBitmaps == null)
+				initActiveBitmaps();
+			if(buildHelperBitmaps == null)
+				initBuildingHelpers();
+				
 			this.structureGrid = new Array();
 			this.structures = new Array();
 			this.gemTemplates = new Object();
+			this.lastOrigin = new Object();
+			this.lastOrigin["xTile"] = 0;
+			this.lastOrigin["yTile"] = 0;
+			this.x = 0;
+			this.y = 0;
 		}
 		
 		public static function fromFile(filePath:String, fileName: String = "Unnamed.txt"): Blueprint
@@ -62,8 +89,14 @@ package ManaMason
 				parseGemTemplates(parts[1].split(File.lineEnding), result);
 		
 			parseBlueprintGrid(grid, result);
-			result.name = bpName;
+			result.blueprintName = bpName;
 			return result;
+		}
+		
+		public function setBlueprintOptions(bpo: BlueprintOptions): Blueprint
+		{
+			this.blueprintOptions = bpo;
+			return this;
 		}
 		
 		private static function parseBlueprintGrid(grid:Array, res:Blueprint): Blueprint
@@ -300,25 +333,60 @@ package ManaMason
 			return res;
 		}
 		
-		public function updateStructureCoords(mouseX:Number, mouseY:Number): Array
+		public function updateOrigin(mouseX:Number, mouseY:Number, force: Boolean = false): void
 		{
-			//ManaMason.ManaMason.logger.log("updateStructureCoords", "Updating...");
-			for each(var element:Structure in this.structures)
+			var vX:Number = Math.floor((mouseX - 50) / 28);
+			var vY:Number = Math.floor((mouseY - 8) / 28);
+			
+			if (vX > 59 || vX < 0 || vY > 37 || vY < 0)
+				return;
+				
+			if (this.lastOrigin.xTile != vX || this.lastOrigin.yTile != vY || force)
 			{
-				element.setBuildingCoords(mouseX, mouseY);
-				element.rendered = false;
+				updateStructures(mouseX, mouseY);
 			}
+			
+			this.lastOrigin.xTile = vX;
+			this.lastOrigin.yTile = vY;
+		}
 		
-			return this.structures;
+		public function updateStructures(mouseX:Number, mouseY:Number): void
+		{
+			for each(var structure:Structure in this.structures)
+			{
+				structure.ghost.visible = true;
+				structure.setBuildingCoords(mouseX, mouseY);
+				
+				if (!structure.fitsOnScene() || structure.type == "-")
+				{
+					structure.ghost.visible = false;
+					continue;
+				}
+				
+				var placeable: Boolean = structure.placeable(blueprintOptions, false);
+				
+				if (!placeable)
+				{
+					if (!blueprintOptions.read(BlueprintOption.SHOW_UNPLACED))
+					{
+						structure.ghost.visible = false;
+						continue;
+					}
+					structure.ghost.transform.colorTransform = redColor;
+				}
+				else
+					structure.ghost.transform.colorTransform = new ColorTransform();
+				
+				structure.ghost.x = structure.buildingX;
+				structure.ghost.y = structure.buildingY;
+			}
 		}
 		
 		public function flipHorizontal(): void
 		{
 			for each (var struct:Structure in this.structures)
 			{
-				//ManaMason.ManaMason.logger.log("flipHorizontal", "Flipping..." + struct.toString());
 				struct.flipHorizontal(this.structureGrid.length);
-				//ManaMason.ManaMason.logger.log("flipHorizontal", "Flipped..." + struct.toString());
 			}
 			for each (var row:Array in this.structureGrid)
 			{
@@ -392,7 +460,104 @@ package ManaMason
 			}
 		}
 		
-		public function toString(): String
+		public function resetGhosts(): void
+		{
+			this.removeChildren();
+			
+			for each (var bitmapType:Object in activeBitmaps)
+			{
+				bitmapType.occupied = 0;
+			}
+			activeWallHelpers.occupied = 0;
+			
+			for each(var structure:Structure in this.structures)
+			{
+				if (structure.type == "-")
+					continue;
+					
+				var placeable: Boolean = structure.placeable(blueprintOptions, false);
+				if (structure.type == "w")
+				{
+					if (activeWallHelpers.occupied >= activeWallHelpers.movieClips.length)
+					{
+						activeWallHelpers.movieClips.push(new McBuildWallHelper());
+					}
+					structure.ghost = activeWallHelpers.movieClips[activeWallHelpers.occupied];
+					structure.ghost.x = structure.buildingX;
+					structure.ghost.y = structure.buildingY;
+					structure.ghost.rotation = 0;
+					structure.ghost.gotoAndStop(1);
+					activeWallHelpers.occupied++;
+				}
+				else
+				{
+					var typeBitmaps:Object = activeBitmaps[structure.type];
+					if (typeBitmaps.occupied >= typeBitmaps.bitmaps.length)
+					{
+						typeBitmaps.bitmaps.push(new Bitmap(BuildHelper.bitmaps[structure.type].bitmapData));
+					}
+					structure.ghost = typeBitmaps.bitmaps[typeBitmaps.occupied];
+					structure.ghost.x = structure.buildingX;
+					structure.ghost.y = structure.buildingY;
+					typeBitmaps.occupied++;
+				}
+				structure.rendered = true;
+			}
+			
+			for each (var type:Object in activeBitmaps)
+			{
+				for (var i:int = 0; i < type.occupied; i++)
+				{
+					this.addChild(type.bitmaps[i]);
+				}
+			}
+			
+			for (var wmci:int = 0; wmci < activeWallHelpers.occupied; wmci++)
+			{
+				this.addChild(activeWallHelpers.movieClips[wmci]);
+			}
+		}
+		
+		public static function cleanup(): void
+		{
+			for each (var mc: MovieClip in activeWallHelpers.movieClips)
+			{
+				mc.stop();
+				mc = null;
+			}
+			
+			activeWallHelpers = {"occupied":0, "movieClips": new Array()};
+			
+			for each(var bmp: Bitmap in BuildHelper.bitmaps)
+			{
+				bmp = null;
+			}
+		}
+		
+		private function initBuildingHelpers(): void
+		{
+			BuildHelper.bitmaps = new Object();
+			var buildHelperBitmaps:Object = BuildHelper.bitmaps;
+			buildHelperBitmaps["a"] = GV.ingameCore.cnt.bmpBuildHelperAmp;
+			buildHelperBitmaps["t"] = GV.ingameCore.cnt.bmpBuildHelperTower;
+			buildHelperBitmaps["r"] = GV.ingameCore.cnt.bmpBuildHelperTrap;
+			buildHelperBitmaps["p"] = GV.ingameCore.cnt.bmpBuildHelperPylon;
+			buildHelperBitmaps["l"] = GV.ingameCore.cnt.bmpBuildHelperLantern;
+		}
+		
+		private function initActiveBitmaps(): void
+		{
+			activeBitmaps = new Object();
+			activeBitmaps["a"] = {"occupied":0, "bitmaps": new Array()};
+			activeBitmaps["t"] = {"occupied":0, "bitmaps": new Array()};
+			activeBitmaps["r"] = {"occupied":0, "bitmaps": new Array()};
+			activeBitmaps["p"] = {"occupied":0, "bitmaps": new Array()};
+			activeBitmaps["l"] = {"occupied":0, "bitmaps": new Array()};
+			
+			activeWallHelpers = {"occupied":0, "movieClips": new Array()};
+		}
+		
+		public function ExportToString(): String
 		{
 			var res:String = "";
 			for each (var row:Array in this.structureGrid)

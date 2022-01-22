@@ -93,17 +93,6 @@ package ManaMason.Utils
 			}
 		}
 		
-		public function redrawRetinaHud(...args): void
-		{
-			GV.ingameCore.controller.deselectEverything(true, true);
-			if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpWallPlaceAvailMap))
-				GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
-			//if(!rHUD.contains(GV.ingameCore.cnt.bmpTowerPlaceAvailMap))
-			//	rHUD.addChild(GV.ingameCore.cnt.bmpTowerPlaceAvailMap);
-			if(!GV.ingameCore.cnt.cntRetinaHud.contains(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap))
-				GV.ingameCore.cnt.cntRetinaHud.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
-		}
-		
 		private function resizeOptionPanelsHandler(): Function
 		{
 			var self: LockedInfoPanel = this;

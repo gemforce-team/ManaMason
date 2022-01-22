@@ -20,6 +20,8 @@ package ManaMason.Structures
 			
 			this.buildingType = "AIR";
 			this.spellButtonIndex = -1;
+			
+			this.ghost = new Object();
 		}
 		
 		public override function castBuild(options: BlueprintOptions):void 
