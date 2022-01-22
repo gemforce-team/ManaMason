@@ -555,6 +555,7 @@ package ManaMason
 			var regGrid:Object = GV.ingameCore.buildingRegPtMatrix;
 			var tileProcessed: Boolean = false;
 			var bp: Blueprint = new Blueprint();
+			bp.blueprintName = "Captured BP";
 			bp.dimX = captureCorners[1][0] - captureCorners[0][0] + 1;
 			bp.dimY = captureCorners[1][1] - captureCorners[0][1] + 1;
 			for (var i:int = captureCorners[0][1]; i <= captureCorners[1][1]; i++) 
@@ -589,7 +590,7 @@ package ManaMason
 		private static function exportBlueprintFile(bp: Blueprint): void
 		{
 			var blueprintsFolder:File = GCFWManaMason.storage.resolvePath("blueprints");
-			var bpFile:File = blueprintsFolder.resolvePath("capturedBP.txt");
+			var bpFile:File = blueprintsFolder.resolvePath("Exported BP.txt");
 			var bpWriter:FileStream = new FileStream();
 			try
 			{
