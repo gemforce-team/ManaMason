@@ -557,6 +557,55 @@ package ManaMason
 			activeWallHelpers = {"occupied":0, "movieClips": new Array()};
 		}
 		
+		public static function tryCaptureFromField(captureCorners: Object): Blueprint
+		{
+			var grid:Object = GV.ingameCore.buildingAreaMatrix;
+			var tileProcessed: Boolean = false;
+			var structureString: String = "";
+			
+			for (var i:int = captureCorners[0][1]; i <= captureCorners[1][1]; i++) 
+			{
+				for (var j:int = captureCorners[0][0]; j <= captureCorners[1][0]; j++) 
+				{
+					tileProcessed = false;
+					for (var type:String in GCFWManaMason.structureClasses)
+					{
+						if (grid[i][j] is GCFWManaMason.structureClasses[type]){
+							structureString += type;
+							tileProcessed = true;
+							break;
+						}
+					}
+					
+					if (!tileProcessed)
+					{
+						structureString += "-";
+					}
+				}
+				structureString += "\r\n";
+			}
+			var capturedBP: Blueprint = Blueprint.fromString(structureString, "Captured BP");
+			exportBlueprintFile(structureString);
+			GV.vfxEngine.createFloatingText4(GV.main.mouseX, GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20), "Blueprint captured!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13);
+			return capturedBP;
+		}
+		
+		private static function exportBlueprintFile(bpString: String): void
+		{
+			var blueprintsFolder:File = GCFWManaMason.storage.resolvePath("blueprints");
+			var bpFile:File = blueprintsFolder.resolvePath("capturedBP.txt");
+			var bpWriter:FileStream = new FileStream();
+			try
+			{
+				bpWriter.open(bpFile, FileMode.WRITE);
+				bpWriter.writeUTFBytes(bpString);
+			}
+			catch (err:Error)
+			{
+				ManaMasonMod.logger.log("BPexport", "Error when exporting a BP!" + err.message);
+			}
+		}
+		
 		public function ExportToString(): String
 		{
 			var res:String = "";
