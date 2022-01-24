@@ -67,7 +67,7 @@ package ManaMason.Structures
 		
 		public override function getCurrentManaCost(): Number
 		{
-			return GV.ingameCore.currentAmplifierBuildingManaCost.g();
+			return Math.max(0, GV.ingameCore.currentAmplifierBuildingManaCost.g());
 		}
 
 		public override function isOnPath():Boolean
@@ -82,6 +82,8 @@ package ManaMason.Structures
 
 		public override function placeable(bpo: BlueprintOptions, finalCalculation:Boolean = false):Boolean
 		{
+			if (!GV.ingameCore.arrIsSpellBtnVisible[this.spellButtonIndex])
+				return false;
 			if (!bpo.read(BlueprintOption.BUILD_ON_PATH) && isOnPath())
 				return false;
 			if (!fitsOnScene())

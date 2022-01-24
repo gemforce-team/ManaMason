@@ -68,7 +68,7 @@ package ManaMason.Structures
 		
 		public override function getCurrentManaCost(): Number
 		{
-			return GV.ingameCore.currentTrapBuildingManaCost.g();
+			return Math.max(0, GV.ingameCore.currentTrapBuildingManaCost.g());
 		}
 
 		public override function isOnPath():Boolean
@@ -83,6 +83,8 @@ package ManaMason.Structures
 
 		public override function placeable(bpo: BlueprintOptions, isFinalCalculation:Boolean = false):Boolean
 		{
+			if (!GV.ingameCore.arrIsSpellBtnVisible[this.spellButtonIndex])
+				return false;
 			if (!fitsOnScene())
 				return false;
 			return GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)

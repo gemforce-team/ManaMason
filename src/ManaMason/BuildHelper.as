@@ -18,6 +18,12 @@ package ManaMason
 	{
 		public static var bitmaps: Object;
 		
+		public static const FIELD_WIDTH: Number = 60;
+		public static const FIELD_HEIGHT: Number = 38;
+		public static const WAVESTONE_WIDTH: Number = 50;
+		public static const TOP_UI_HEIGHT: Number = 8;
+		public static const TILE_SIZE: Number = 28;
+		
 		public function BuildHelper() 
 		{
 			throw new IllegalOperationError("Illegal instantiation!");

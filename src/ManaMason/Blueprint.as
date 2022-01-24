@@ -339,10 +339,10 @@ package ManaMason
 		
 		public function updateOrigin(mouseX:Number, mouseY:Number, force: Boolean = false): void
 		{
-			var vX:Number = Math.floor((mouseX - 50) / 28);
-			var vY:Number = Math.floor((mouseY - 8) / 28);
+			var vX:Number = Math.floor((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE);
+			var vY:Number = Math.floor((mouseY - BuildHelper.TOP_UI_HEIGHT) / BuildHelper.TILE_SIZE);
 			
-			if (vX > 59 || vX < 0 || vY > 37 || vY < 0)
+			if (vX >= BuildHelper.FIELD_WIDTH || vX < 0 || vY >= BuildHelper.FIELD_HEIGHT || vY < 0)
 				return;
 				
 			if (this.lastOrigin.xTile != vX || this.lastOrigin.yTile != vY || force)
@@ -512,10 +512,13 @@ package ManaMason
 		
 		public static function cleanup(): void
 		{
-			for each (var mc: MovieClip in activeWallHelpers.movieClips)
+			if (activeWallHelpers != null)
 			{
-				mc.stop();
-				mc = null;
+				for each (var mc: MovieClip in activeWallHelpers.movieClips)
+				{
+					mc.stop();
+					mc = null;
+				}
 			}
 			
 			activeWallHelpers = {"occupied":0, "movieClips": new Array()};

@@ -4,56 +4,68 @@ package ManaMason.Utils
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.mcDyn.McInfoPanel;
 	import com.giab.games.gcfw.mcDyn.McOptPanel;
+	import flash.display.Bitmap;
+	import flash.display.MovieClip;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.display.DisplayObject;
+	import flash.text.TextField;
 	/**
 	 * ...
 	 * @author Hellrage
 	 */
-	public class LockedInfoPanel
+	public class LockedInfoPanel extends MovieClip
 	{
-		public var lockedWidth: Number;
-		public var lockedHeight: Number;
-		public var lockedPlateColor: uint;
 		private var hasOptions:Boolean;
 		private var _resizeHandler: Function;
-		public function get resizeHandler(): Function {return _resizeHandler};
+		private static var bg: Bitmap;
+		private var baseWidth: Number;
+		public var titleText: TextField;
 		
-		public var basePanel: McInfoPanel;
-		
-		public function LockedInfoPanel(panel: McInfoPanel) 
+		public function LockedInfoPanel() 
 		{
 			super();
-			this.basePanel = panel;
-			this._resizeHandler = resizeOptionPanelsHandler();
 		}
 		
-		public function setup(width: Number, height: Number, lockedX: Number, lockedY: Number, plateColor: uint): void
+		public function setup(width: Number, height: Number, x: Number, y: Number, plateColor: uint): void
 		{
-			this.lockedWidth = width;
-			this.lockedHeight = height;
-			this.basePanel.lockedX = lockedX;
-			this.basePanel.lockedY = lockedY;
-			this.lockedPlateColor = plateColor;
-			this.basePanel.reset(lockedWidth, lockedPlateColor);
-			this.basePanel.isLocationLocked = true;
+			this.removeChildren();
+			
+			if (bg)
+			{
+				bg.bitmapData.dispose();
+			}
+			
+			var dummyInfoPanel: McInfoPanel = new McInfoPanel();
+			dummyInfoPanel.reset(width, plateColor);
+			dummyInfoPanel.h = height;
+			dummyInfoPanel.doEnterFrame();
+			var bmp: Bitmap = dummyInfoPanel.bmp;
+			bmp.width = width;
+			bmp.height = height;
+			this.addChild(bmp);
+			
+			this.width = width;
+			this.baseWidth = width;
+			this.height = height;
+			this.x = x;
+			this.y = y;
+			
+			this.titleText = new TextField();
+			
 			this.hasOptions = false;
-			this.basePanel.w = lockedWidth;
+			this.mouseEnabled = this.mouseChildren = true;
 		}
 		
-		public function lockedDoEnterFrame(... args): void
+		public function addTitle(field: TextField): void
 		{
-			if(lockedHeight > 0)
-				this.basePanel.h = lockedHeight;
-			this.basePanel.plateColor = uint(lockedPlateColor);
-			this.basePanel.doEnterFrame();
-			this.basePanel.x = this.basePanel.lockedX;
-			this.basePanel.y = this.basePanel.lockedY;
+			this.titleText = field;
+			this.addChild(this.titleText);
 		}
 		
 		public function addOptions(options: BlueprintOptions): void
 		{
+			var currY: Number = this.titleText.height + 15;
 			if (options.options.length != 0)
 			{
 				this.hasOptions = true;
@@ -79,89 +91,31 @@ package ManaMason.Utils
 						var current:Boolean = opt.value;
 						opt.value = !current;
 						e.target.parent.btn.gotoAndStop(opt.value ? 2 : 1);
+						e.stopImmediatePropagation();
 					};
 				}(option);
 				
-				setPanelPositionAndSize(newMC, lockedWidth, basePanel.nextTfPos, scaleFactor());
-				basePanel.addExtraHeight(newMC.plate.height + 2);
+				setPanelPositionAndSize(newMC, this.baseWidth, currY);
+				currY += newMC.plate.height + 2;
 				
 				newMC.btn.gotoAndStop(option.value ? 2 : 1);
 				newMC.plate.addEventListener(MouseEvent.MOUSE_OVER, onBooleanMouseover);
 				newMC.plate.addEventListener(MouseEvent.MOUSE_OUT, onBooleanMouseout);
 				newMC.addEventListener(MouseEvent.MOUSE_DOWN, onBooleanClicked);
-				basePanel.addChild(newMC);
+				this.addChild(newMC);
 			}
 		}
 		
-		private function resizeOptionPanelsHandler(): Function
-		{
-			var self: LockedInfoPanel = this;
-			return function(e:Event): void {
-				if (hasOptions)
-				{
-					var stageHeight: Number = GV.main.stage.stageHeight;
-					var stageWidth: Number = GV.main.stage.stageWidth;
-					for (var i:uint = 0; i < self.basePanel.numChildren; i++)
-					{
-						var option: McOptPanel = self.basePanel.getChildAt(i) as McOptPanel;
-						if(option != null)
-							setPanelPositionAndSize(option, self.lockedWidth, i * 30 + 10, scaleFactor());
-					}
-				}
-			}
-		}
-		
-		private function scaleFactor(): Number
-		{
-			var stageH: Number = GV.main.stage.stageHeight;
-			var stageW: Number = GV.main.stage.stageWidth;
-			
-			var scaleH: Number = stageH / 1080;
-			var scaleW: Number = stageW / 1920;
-			return Math.min(scaleH, scaleW);
-		}
-		
-		private function setPanelPositionAndSize(oMC: McOptPanel, baseWidth: Number, startingY: Number, scaleFactor: Number): void
+		private function setPanelPositionAndSize(oMC: McOptPanel, baseWidth: Number, startingY: Number): void
 		{
 			oMC.y = startingY;
 			oMC.x = 4;
-			oMC.plate.width = baseWidth * scaleFactor  - 8;
-			oMC.plate.height = 30 * scaleFactor;
-			oMC.btn.scaleX = 0.7 * scaleFactor;
-			oMC.btn.scaleY = 0.7 * scaleFactor;
-			oMC.btn.x = baseWidth * scaleFactor - 16 - oMC.btn.width;
-			oMC.tf.scaleX = oMC.tf.scaleY = oMC.plate.scaleX * 1.3;
-			
-		}
-		
-		public function show(): void
-		{
-			this.basePanel.visible = true;
-			var children:Vector.<DisplayObject> = new <DisplayObject>[];
-			if (this.hasOptions)
-			{
-				for (var i:uint = 0; i < this.basePanel.numChildren; i++)
-				{
-					children.push(this.basePanel.getChildAt(i));
-				}
-				this.basePanel.removeChildren();
-			}
-			lockedDoEnterFrame();
-			if (this.hasOptions)
-			{
-				for (i = 0; i < children.length; i++)
-				{
-					this.basePanel.addChild(children[i]);
-				}
-			}
-			GV.ingameCore.cnt.addChild(this.basePanel);
-		}
-		
-		public function hide(): void
-		{
-			this.basePanel.visible = false;
-			GV.ingameCore.cnt.removeChild(this.basePanel);
+			oMC.plate.width = baseWidth  - 8;
+			oMC.plate.height = 30;
+			oMC.btn.scaleX = 0.5;
+			oMC.btn.scaleY = 0.5;
+			oMC.btn.x = baseWidth - 16 - oMC.btn.width;
+			oMC.tf.scaleX = oMC.tf.scaleY = oMC.plate.scaleX * 1.55;
 		}
 	}
-
 }
