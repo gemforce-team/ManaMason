@@ -7,9 +7,9 @@ package ManaMason.Structures
 	
 	import ManaMason.BlueprintOptions;
 	import ManaMason.Utils.BlueprintOption;
-	import com.giab.games.gcfw.constants.BuildingType;
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.entity.Amplifier;
+	import com.giab.games.gccs.steam.constants.BuildingType;
+	import com.giab.games.gccs.steam.GV;
+	import com.giab.games.gccs.steam.entity.Amplifier;
 	
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
@@ -21,11 +21,11 @@ package ManaMason.Structures
 			super("a", bpIX, bpIY, gem);
 			this.rendered = false;
 			this.size = 2;
-			this.xOffset = -4;
-			this.yOffset = -5;
+			this.xOffset = -3;
+			this.yOffset = -3;
 			
 			this.buildingType = BuildingType.AMPLIFIER;
-			this.spellButtonIndex = 14;
+			this.spellButtonIndex = 11;
 		}
 		
 		public override function castBuild(bpo: BlueprintOptions): void
@@ -41,6 +41,7 @@ package ManaMason.Structures
 			
 			if (bpo.read(BlueprintOption.SPEND_MANA) && GV.ingameCore.getMana() < this.getCurrentManaCost())
 				return;
+				
 				
 			if (placeable(bpo, true))
 			{
@@ -67,7 +68,7 @@ package ManaMason.Structures
 		
 		public override function getCurrentManaCost(): Number
 		{
-			return GV.ingameCore.currentAmplifierBuildingManaCost.g();
+			return Math.max(0, GV.ingameCore.currentAmplifierBuildingManaCost.g());
 		}
 
 		public override function isOnPath():Boolean
@@ -82,6 +83,9 @@ package ManaMason.Structures
 
 		public override function placeable(bpo: BlueprintOptions, finalCalculation:Boolean = false):Boolean
 		{
+			if (!GV.ingameCore.arrIsSpellBtnVisible[this.spellButtonIndex])
+				return false;
+				
 			if (!bpo.read(BlueprintOption.BUILD_ON_PATH) && isOnPath())
 				return false;
 			if (!fitsOnScene())

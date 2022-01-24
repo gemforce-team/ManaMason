@@ -2,7 +2,7 @@ package ManaMason
 {
 	import Bezel.Bezel;
 	import Bezel.BezelMod;
-	import Bezel.GCFW.GCFWBezel;
+	import Bezel.GCCS.GCCSBezel;
 	import Bezel.Logger;
 	
 	import flash.display.MovieClip;
@@ -14,7 +14,7 @@ package ManaMason
 	{
 		
 		public function get VERSION():String { return "1.6"; }
-		public function get BEZEL_VERSION():String { return "1.0.0"; }
+		public function get BEZEL_VERSION():String { return "1.0.1"; }
 		public function get MOD_NAME():String { return "ManaMason"; }
 		
 		private var manaMason:Object;
@@ -23,7 +23,7 @@ package ManaMason
 		internal static var logger:Logger;
 		internal static var instance:ManaMasonMod;
 
-		public static const GCFW_VERSION:String = "1.2.1a";
+		public static const GCCS_VERSION:String = "1.0.6";
 		
 		public function ManaMasonMod() 
 		{
@@ -36,9 +36,9 @@ package ManaMason
 		{
 			bezel = modLoader;
 			logger = bezel.getLogger("ManaMason");
-			if (bezel.mainLoader is GCFWBezel)
+			if (bezel.mainLoader is GCCSBezel)
 			{
-				manaMason = new GCFWManaMason();
+				manaMason = new GCCSManaMason();
 			}
 		}
 		
@@ -53,7 +53,7 @@ package ManaMason
 		
 		public function prettyVersion(): String
 		{
-			return 'v' + VERSION + ' for ' + GCFW_VERSION;
+			return 'v' + VERSION + ' for ' + GCCS_VERSION;
 		}
 	}
 

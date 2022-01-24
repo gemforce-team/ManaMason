@@ -11,34 +11,38 @@ package ManaMason
 	import ManaMason.Utils.BlueprintOption;
 	import ManaMason.Utils.LockedInfoPanel;
 	import com.giab.common.abstract.SpriteExt;
-	import com.giab.games.gcfw.constants.IngameStatus;
-	import com.giab.games.gcfw.entity.Amplifier;
-	import com.giab.games.gcfw.entity.Lantern;
-	import com.giab.games.gcfw.entity.Pylon;
-	import com.giab.games.gcfw.entity.Tower;
-	import com.giab.games.gcfw.entity.Trap;
-	import com.giab.games.gcfw.entity.Wall;
+	import com.giab.games.gccs.steam.constants.ActionStatus;
+	import com.giab.games.gccs.steam.constants.IngameStatus;
+	import com.giab.games.gccs.steam.entity.Amplifier;
+	import com.giab.games.gccs.steam.entity.Tower;
+	import com.giab.games.gccs.steam.entity.Trap;
+	import com.giab.games.gccs.steam.entity.Wall;
+	import com.giab.games.gccs.steam.mcStat.McIngameFrame;
 	import flash.display.Shape;
+	import flash.text.AntiAliasType;
+	import flash.text.TextField;
+	import flash.text.TextFieldAutoSize;
 	import flash.ui.Keyboard;
 	
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.SB;
-	import com.giab.games.gcfw.mcDyn.McInfoPanel;
+	import com.giab.games.gccs.steam.GV;
+	import com.giab.games.gccs.steam.SB;
+	import com.giab.games.gccs.steam.mcDyn.McInfoPanel;
 	
 	import flash.display.MovieClip;
 	import flash.filesystem.*;
 	import flash.events.*;
-	import com.giab.games.gcfw.mcDyn.McBuildWallHelper;
+	import com.giab.games.gccs.steam.mcDyn.McBuildWallHelper;
 	import flash.geom.ColorTransform;
 	import flash.events.MouseEvent;
 	
-	public class GCFWManaMason extends MovieClip
+	public class GCCSManaMason extends MovieClip
 	{
 		internal static var storage:File;
 		public static var structureClasses: Object;
 		
 		private var blueprints:Array;
 		private var selectedBlueprint:Blueprint;
+		private var infoPanelTitle:TextField;
 		private var currentBlueprintIndex:int;
 		private var mouseMoveBPUpdateHandler:Function;
 		
@@ -49,18 +53,17 @@ package ManaMason
 		
 		private var _crosshair:Shape;
 		private var _lockedInfoPanel: LockedInfoPanel;
-		private var _baseInfoPanel: McInfoPanel;
 		private function get crosshair():Shape {
 			if (_crosshair == null)
 			{
-				initUI();
+				_crosshair = new Shape;
 			}
 			return _crosshair;
 		}
 		private function get infoPanel():LockedInfoPanel {
 			if (_lockedInfoPanel == null)
 			{
-				initUI();
+				_lockedInfoPanel = new LockedInfoPanel();
 			}
 			return _lockedInfoPanel;
 		}
@@ -68,7 +71,7 @@ package ManaMason
 		private static var settings: SettingManager;
 		private static var blueprintOptions: BlueprintOptions;
 		
-		public function GCFWManaMason() 
+		public function GCCSManaMason() 
 		{
 			super();
 			
@@ -87,28 +90,26 @@ package ManaMason
 			structureClasses['t'] = Tower;
 			structureClasses['a'] = Amplifier;
 			structureClasses['r'] = Trap;
-			structureClasses['p'] = Pylon;
-			structureClasses['l'] = Lantern;
 			
 			//settings = SettingManager.getManager("ManaMason");
 			//registerDefaultSettings();
-			
-			initUI();
 			
 			registerKeybinds();
 			
 			prepareFolders();
 			
-			reloadBlueprintList();
+			initInfoPanelTitle();
 			
-			var self: GCFWManaMason = this;
+			//reloadBlueprintList();
+			this.currentBlueprintIndex = -1;
+			
+			var self: GCCSManaMason = this;
 			this.mouseMoveBPUpdateHandler = function(e: MouseEvent):void {
 				if (self.buildingMode)
 				{
-					self.updateBPOrigin(e.stageX, e.stageY);
+					self.updateBPOrigin();
 					self.redrawRetinaHud();
 				}
-				
 			};
 			
 			addEventListeners();
@@ -116,13 +117,24 @@ package ManaMason
 			ManaMasonMod.logger.log("bind", "ManaMason initialized!");
 		}
 		
-		private function initUI(): void
+		private function initInfoPanelTitle(): void
 		{
-			_baseInfoPanel = new McInfoPanel();
-			_crosshair = new Shape();
-			_lockedInfoPanel = new ManaMason.Utils.LockedInfoPanel(_baseInfoPanel);
-			infoPanel.setup(1920 - 1728, 670, 1728, 230, 4278190080);
-			//infoPanel.basePanel.addEventListener(MouseEvent.CLICK, function(me:MouseEvent):void {GV.vfxEngine.createFloatingText4(400, 400, "InfoPanelCLicked!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13); });
+			var dummyInfoPanel: McInfoPanel = new McInfoPanel();
+			dummyInfoPanel.addTextfield(15984813, "No blueprint", false, 10);
+			this.infoPanelTitle = dummyInfoPanel.textfields.pop();
+			this.infoPanelTitle.y = 10;
+			this.infoPanelTitle.width = infoPanel.width - 10;
+			this.infoPanelTitle.multiline = false;
+			this.infoPanelTitle.wordWrap = false;
+			this.infoPanelTitle.autoSize = TextFieldAutoSize.NONE
+			this.infoPanelTitle.getTextFormat().align = "center";
+			/*this.infoPanelTitle.defaultTextFormat = dummyInfoPanel.tFormat;
+			this.infoPanelTitle.textColor = 15984813;
+			this.infoPanelTitle.selectable = false;
+			this.infoPanelTitle.antiAliasType = AntiAliasType.ADVANCED;
+			//this.infoPanelTitle.height = 25;
+			this.infoPanelTitle.y = 5;
+			this.infoPanelTitle.text = "No blueprint";*/
 		}
 		
 		private function registerDefaultSettings(): void
@@ -164,7 +176,7 @@ package ManaMason
 					else
 					{
 						SB.playSound("sndalert");
-						GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Error opening" + fileName + "!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
+						GV.vfxEngine.createFloatingText(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Error opening" + fileName + "!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
 					}
 				}
 			}
@@ -197,11 +209,12 @@ package ManaMason
 			else if(this.currentBlueprintIndex > blueprints.length - 1)
 				this.currentBlueprintIndex = 0;
 				
-			GV.main.stage.removeChild(this.selectedBlueprint);
+			GV.main.cntScreens.cntIngame.removeChild(this.selectedBlueprint);
 			this.selectedBlueprint = this.blueprints[this.currentBlueprintIndex];
+			this.infoPanelTitle.text = this.selectedBlueprint.blueprintName;
 			this.selectedBlueprint.resetGhosts();
 			this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
-			GV.main.stage.addChild(this.selectedBlueprint);
+			GV.main.cntScreens.cntIngame.addChild(this.selectedBlueprint);
 			drawBuildingOverlay(null);
 		}
 		
@@ -240,13 +253,13 @@ package ManaMason
 		private function addEventListeners(): void
 		{
 			ManaMasonMod.bezel.addEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
-			GV.main.stage.addEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
-			GV.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true, 10);
-			GV.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
-			GV.main.stage.addEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
-			GV.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
-			GV.main.stage.addEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
-			this.infoPanel.basePanel.addEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
+			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
+			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true, 10);
+			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
+			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
+			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
+			//ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
+			this.infoPanel.addEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
 		}
 		
 		private function eh_discardAllMouseInput(e:MouseEvent):void
@@ -274,19 +287,18 @@ package ManaMason
 		private function removeEventListeners(): void
 		{
 			ManaMasonMod.bezel.removeEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
-			GV.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
-			GV.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
-			GV.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
-			GV.main.stage.removeEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
-			GV.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
-			GV.main.stage.removeEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
-			this.infoPanel.basePanel.removeEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
+			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
+			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
+			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
+			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
+			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
+			//ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
+			this.infoPanel.removeEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
 		}
 		
 		public function eh_interceptKeyboardEvent(e:Object): void
 		{
 			var pE:KeyboardEvent = e.eventArgs.event;
-			this.shiftKeyPressed = pE.shiftKey;
 			
 			if (pE.keyCode == Keyboard.ESCAPE)
 			{
@@ -333,7 +345,7 @@ package ManaMason
 			{
 				reloadBlueprintList();
 				SB.playSound("sndalert");
-				GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Reloading blueprints!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
+				GV.vfxEngine.createFloatingText(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Reloading blueprints!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
 				e.eventArgs.continueDefault = false;
 				return;
 			}
@@ -371,18 +383,45 @@ package ManaMason
 		
 		private function enterCaptureMode(): void
 		{
+			if(GV.ingameCore.actionStatus == ActionStatus.CAST_GEMBOMB_INITIATED)
+			{
+				GV.ingameCore.controller.deselectEverything(true,false);
+			}
+
+			if(!(GV.ingameCore.actionStatus < ActionStatus.DRAGGING_GEM_FROM_TOWER_IDLE || GV.ingameCore.actionStatus >= ActionStatus.CAST_ENHANCEMENT_INITIATED))
+				return;
+				
+			GV.ingameCore.cnt.cntRetinaHud.addChild(crosshair);
+			infoPanel.setup(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH, 20, BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT, 4278190080);
+			this.infoPanelTitle.width = this.infoPanel.width;
+			this.infoPanelTitle.y = 3;
+			this.infoPanelTitle.x = 0;
+			infoPanel.addTitle(this.infoPanelTitle);
+			
 			this.captureMode = true;
 			GV.mcInfoPanel.visible = false;
+			showInfoPanel();
 			discardAllMouseInput();
 			drawCaptureOverlay(null);
 		}
 		
 		private function enterBuildingMode(): void
 		{
+			if(GV.ingameCore.actionStatus == ActionStatus.CAST_GEMBOMB_INITIATED)
+			{
+				GV.ingameCore.controller.deselectEverything(true,false);
+			}
+
+			if(!(GV.ingameCore.actionStatus < ActionStatus.DRAGGING_GEM_FROM_TOWER_IDLE || GV.ingameCore.actionStatus >= ActionStatus.CAST_ENHANCEMENT_INITIATED))
+				return;
+				
+			if (this.currentBlueprintIndex == -1)
+				this.reloadBlueprintList();
+				
 			if (this.currentBlueprintIndex == -1)
 			{
 				SB.playSound("sndalert");
-				GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"No blueprints in the blueprints folder!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
+				GV.vfxEngine.createFloatingText(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"No blueprints in the blueprints folder!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
 			}
 			else
 			{
@@ -390,10 +429,40 @@ package ManaMason
 				GV.mcInfoPanel.visible = false;
 				this.selectedBlueprint.resetGhosts();
 				this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
-				GV.main.stage.addChild(this.selectedBlueprint);
+				GV.main.cntScreens.cntIngame.addChild(this.selectedBlueprint);
+				changeRightSideUIVisibility(false);
+				
+				infoPanel.setup(1088 - BuildHelper.WAVESTONE_WIDTH - BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH - 4, BuildHelper.TILE_SIZE * BuildHelper.FIELD_HEIGHT, BuildHelper.WAVESTONE_WIDTH + BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH + 4, BuildHelper.TOP_UI_HEIGHT, 0);
+				
+				this.infoPanelTitle.text = this.selectedBlueprint.blueprintName;
+				this.infoPanelTitle.x = 0;
+				this.infoPanelTitle.y = 10;
+				this.infoPanelTitle.width = this.infoPanel.width;
+				infoPanel.addTitle(this.infoPanelTitle);
+				
+				infoPanel.addOptions(blueprintOptions);
+				showInfoPanel();
+			
 				//discardAllMouseInput();
 				GV.ingameCore.controller.deselectEverything(true, true);
 			}
+		}
+		
+		private function changeRightSideUIVisibility(shouldShow: Boolean): void
+		{
+			var frame: McIngameFrame = GV.main.cntScreens.cntIngame.mcIngameFrame;
+			frame.mcInventory.visible = shouldShow;
+			frame.mcGemGradeAvailBar.visible = shouldShow;
+			for each(var gemBtn: MovieClip in frame.gemCreateButtons)
+				gemBtn.visible = shouldShow;
+			frame.btnCastBuildWall.visible = shouldShow;
+			frame.btnCastBuildTrap.visible = shouldShow;
+			frame.btnCastBuildTower.visible = shouldShow;
+			frame.btnCastBuildAmplifier.visible = shouldShow;
+			frame.btnCastCombineGems.visible = shouldShow;
+			frame.btnCastThrow.visible = shouldShow;
+			frame.tfBombAmount.visible = shouldShow;
+			GV.ingameCore.cnt.cntGemsInInventory.visible = shouldShow;
 		}
 		
 		private function discardAllMouseInput(): void
@@ -438,7 +507,7 @@ package ManaMason
 			var mouseX:Number = GV.ingameCore.cnt.root.mouseX;
 			var mouseY:Number  = GV.ingameCore.cnt.root.mouseY;
 			
-			if (mouseX < 50 || mouseX > 50 + 1680 || mouseY < 8 || mouseY > 8 + 1064)
+			if (mouseX < BuildHelper.WAVESTONE_WIDTH || mouseX > BuildHelper.WAVESTONE_WIDTH + BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH || mouseY < BuildHelper.TOP_UI_HEIGHT || mouseY > BuildHelper.TOP_UI_HEIGHT + BuildHelper.TILE_SIZE * BuildHelper.FIELD_HEIGHT)
 			{
 				return;
 			}
@@ -450,8 +519,8 @@ package ManaMason
 			else if (this.captureMode)
 			{
 					
-				var vX:Number = Math.floor((mouseX - 50) / 28);
-				var vY:Number = Math.floor((mouseY - 8) / 28);
+				var vX:Number = Math.floor((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE);
+				var vY:Number = Math.floor((mouseY - BuildHelper.TOP_UI_HEIGHT) / BuildHelper.TILE_SIZE);
 				
 				if (this.captureCorners[0] == null)
 				{
@@ -524,10 +593,11 @@ package ManaMason
 			this.captureCorners[0] = null;
 			this.captureCorners[1] = null;
 			this.captureMode = false;
-			infoPanel.hide();
+			hideInfoPanel();
 			GV.mcInfoPanel.visible = true;
 			restoreAllMouseInput();
 			crosshair.graphics.clear();
+			GV.ingameCore.cnt.cntRetinaHud.addChild(crosshair);
 		}
 		
 		private function drawBuildingOverlay(e: Event): void
@@ -536,13 +606,6 @@ package ManaMason
 				return;
 				
 			redrawRetinaHud();
-			
-			infoPanel.setup(1920 - 1728, 670, 1728, 230, 4278190080);
-			infoPanel.basePanel.addTextfield(16777215, this.selectedBlueprint.blueprintName || "No blueprint", true, 11);
-			infoPanel.basePanel.addExtraHeight(10);
-			infoPanel.addOptions(blueprintOptions);
-			infoPanel.show();
-			infoPanel.basePanel.mouseEnabled = infoPanel.basePanel.mouseChildren = true;
 		}
 		
 		public function redrawRetinaHud(...args): void
@@ -557,10 +620,10 @@ package ManaMason
 				rHUD.addChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
 		}
 		
-		public function updateBPOrigin(mX: Number, mY: Number): void
+		public function updateBPOrigin(): void
 		{
-			if(this.buildingMode)
-				this.selectedBlueprint.updateOrigin(mX, mY);
+			if(this.buildingMode && this.currentBlueprintIndex != -1)
+				this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY);
 		}
 		
 		private function drawCaptureOverlay(e: Event): void
@@ -571,39 +634,35 @@ package ManaMason
 			var mX: Number = GV.main.cntScreens.cntIngame.root.mouseX;
 			var mY: Number = GV.main.cntScreens.cntIngame.root.mouseY;
 			
-			infoPanel.setup(1680, -1, 50, 8, 4278190080);
 			var text: String = "";
 			
-			if (mX > 50 &&
-				mX < 50 + 1680 &&
-				mY > 8 &&
-				mY < 8 + 1064)
+			if (mX > BuildHelper.WAVESTONE_WIDTH &&
+				mX < BuildHelper.WAVESTONE_WIDTH + BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH &&
+				mY > BuildHelper.TOP_UI_HEIGHT &&
+				mY < BuildHelper.TOP_UI_HEIGHT + BuildHelper.TILE_SIZE*BuildHelper.FIELD_HEIGHT)
 			{
 				var rHUD: SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
-				rHUD.removeChildren();
+				/*if(rHUD.getChildIndex(crosshair) >=0 )
+					rHUD.removeChild(crosshair);*/
 				crosshair.graphics.clear();
 				crosshair.graphics.lineStyle(2, 0x00FF00, 1);
 				if (this.captureCorners[0] == null) {
-					text = "Please click one corner of your selection.";
-					crosshair.graphics.moveTo(50, mY);
-					crosshair.graphics.lineTo(1680+50, mY);
-					crosshair.graphics.moveTo(mX, 8);
-					crosshair.graphics.lineTo(mX, 1064+8);
+					this.infoPanelTitle.text = "Please click one corner of your selection.";
+					crosshair.graphics.moveTo(BuildHelper.WAVESTONE_WIDTH, mY);
+					crosshair.graphics.lineTo(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH+BuildHelper.WAVESTONE_WIDTH, mY);
+					crosshair.graphics.moveTo(mX, BuildHelper.TOP_UI_HEIGHT);
+					crosshair.graphics.lineTo(mX, BuildHelper.TILE_SIZE * BuildHelper.FIELD_HEIGHT+BuildHelper.TOP_UI_HEIGHT);
 				}
 				else if (this.captureCorners[1] == null)
 				{
-					text = "Please click the opposite corner of your selection.";
-					crosshair.graphics.moveTo(50 + 14 + 28 * (this.captureCorners[0][0]), 8 + 14 + 28 * (this.captureCorners[0][1]));
-					crosshair.graphics.lineTo(50 + 14 + 28 * (this.captureCorners[0][0]), mY);
+					this.infoPanelTitle.text = "Please click the opposite corner of your selection.";
+					crosshair.graphics.moveTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][0]), BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][1]));
+					crosshair.graphics.lineTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][0]), mY);
 					crosshair.graphics.lineTo(mX, mY);
-					crosshair.graphics.lineTo(mX, 8 + 14 + 28 * (this.captureCorners[0][1]));
-					crosshair.graphics.lineTo(50 + 14 + 28 * (this.captureCorners[0][0]), 8 + 14 + 28 * (this.captureCorners[0][1]));
+					crosshair.graphics.lineTo(mX, BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][1]));
+					crosshair.graphics.lineTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][0]), BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][1]));
 				}
-				rHUD.addChild(crosshair);
 			}
-			
-			infoPanel.basePanel.addTextfield(16777215, text, true, 11);
-			infoPanel.show();
 		}
 		
 		private function exitBuildingMode(): void
@@ -611,12 +670,22 @@ package ManaMason
 			var rHUD:Object = GV.ingameCore.cnt.cntRetinaHud;
 			rHUD.removeChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
 			rHUD.removeChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
-			infoPanel.hide();
+			hideInfoPanel();
 			restoreAllMouseInput();
+			changeRightSideUIVisibility(true);
 			GV.mcInfoPanel.visible = true;
-			GV.main.stage.removeChild(this.selectedBlueprint);
+			GV.main.cntScreens.cntIngame.removeChild(this.selectedBlueprint);
 			this.buildingMode = false;
 		}
+		
+		private function showInfoPanel(): void
+		{
+			GV.main.addChild(this.infoPanel);
+		}
+		
+		private function hideInfoPanel(): void
+		{
+			GV.main.removeChild(this.infoPanel);
+		}
 	}
-
 }

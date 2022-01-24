@@ -7,11 +7,11 @@ package ManaMason.Structures
 	
 	import ManaMason.BlueprintOptions;
 	import ManaMason.Utils.BlueprintOption;
-	import com.giab.games.gcfw.constants.BuildingType;
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.entity.Trap;
+	import com.giab.games.gccs.steam.constants.BuildingType;
+	import com.giab.games.gccs.steam.GV;
+	import com.giab.games.gccs.steam.entity.Trap;
 	
-	import ManaMason.GCFWManaMason;
+	import ManaMason.GCCSManaMason;
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
 	
@@ -24,9 +24,9 @@ package ManaMason.Structures
 			this.size = 2;
 				
 			this.buildingType = BuildingType.TRAP;
-			this.spellButtonIndex = 15;
-			this.xOffset = 4;
-			this.yOffset = 4;
+			this.spellButtonIndex = 13;
+			this.xOffset = 3;
+			this.yOffset = 3;
 		}
 		
 		public override function castBuild(bpo: BlueprintOptions): void
@@ -39,7 +39,7 @@ package ManaMason.Structures
 					super.castBuild(bpo);
 				return;
 			}
-			
+				
 			if (bpo.read(BlueprintOption.SPEND_MANA) && GV.ingameCore.getMana() < this.getCurrentManaCost())
 				return;
 				
@@ -68,7 +68,7 @@ package ManaMason.Structures
 		
 		public override function getCurrentManaCost(): Number
 		{
-			return GV.ingameCore.currentTrapBuildingManaCost.g();
+			return Math.max(0, GV.ingameCore.currentTrapBuildingManaCost.g());
 		}
 
 		public override function isOnPath():Boolean
@@ -83,6 +83,8 @@ package ManaMason.Structures
 
 		public override function placeable(bpo: BlueprintOptions, isFinalCalculation:Boolean = false):Boolean
 		{
+			if (!GV.ingameCore.arrIsSpellBtnVisible[this.spellButtonIndex])
+				return false;
 			if (!fitsOnScene())
 				return false;
 			return GV.ingameCore.controller.isBuildingBuildPointFree(buildingGridX, buildingGridY, this.buildingType)

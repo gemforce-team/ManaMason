@@ -4,14 +4,13 @@ package ManaMason
 	 * ...
 	 * @author Hellrage
 	 */
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.entity.Orblet;
-	import com.giab.games.gcfw.mcDyn.McBuildWallHelper;
+	import com.giab.games.gccs.steam.GV;
+	import com.giab.games.gccs.steam.entity.Orblet;
+	import com.giab.games.gccs.steam.mcDyn.McBuildWallHelper;
 	import flash.display.Bitmap;
 	import flash.display.MovieClip;
 	import flash.geom.ColorTransform;
-	 
-	import ManaMason.Structures.PylonStruct;
+	
 	import ManaMason.BlueprintOptions;
 	import ManaMason.Utils.BlueprintOption;
 	import flash.filesystem.*;
@@ -33,7 +32,7 @@ package ManaMason
 		private static var activeBitmaps:Object;
 		private static var activeWallHelpers:Object;
 		private static var buildHelperBitmaps:Object;
-		private static var allowedSymbols:Array = ["-", "a", "t", "w", "p", "l", "r"];
+		private static var allowedSymbols:Array = ["-", "a", "t", "w", "r"];
 		
 		private static var _emptyBlueprint:Blueprint;
 		public static function get emptyBlueprint():Blueprint 
@@ -130,13 +129,7 @@ package ManaMason
 								var gemId:int = parseInt(gemIdString);
 								if (!isNaN(gemId))
 								{
-									if (structure.type == "p")
-									{
-										var pylon:PylonStruct = structure as PylonStruct;
-										pylon.targetPriority = gemId;
-									}
-									else
-										structure.gemTemplate = res.gemTemplates[gemId] || null;
+									structure.gemTemplate = res.gemTemplates[gemId] || null;
 								}
 							}
 						}
@@ -339,10 +332,10 @@ package ManaMason
 		
 		public function updateOrigin(mouseX:Number, mouseY:Number, force: Boolean = false): void
 		{
-			var vX:Number = Math.floor((mouseX - 50) / 28);
-			var vY:Number = Math.floor((mouseY - 8) / 28);
+			var vX:Number = Math.floor((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE);
+			var vY:Number = Math.floor((mouseY - BuildHelper.TOP_UI_HEIGHT) / BuildHelper.TILE_SIZE);
 			
-			if (vX > 59 || vX < 0 || vY > 37 || vY < 0)
+			if (vX >= BuildHelper.FIELD_WIDTH || vX < 0 || vY >= BuildHelper.FIELD_HEIGHT || vY < 0)
 				return;
 				
 			if (this.lastOrigin.xTile != vX || this.lastOrigin.yTile != vY || force)
@@ -419,13 +412,12 @@ package ManaMason
 		{
 			for each (var str:Structure in this.structures)
 			{
-				if (str.fitsOnScene() && GV.ingameCore.arrIsSpellBtnVisible[str.spellButtonIndex])
+				if (str.fitsOnScene())
 				{
 					str.castBuild(options);
 				}
 			}
-			GV.ingameCore.renderer2.redrawHighBuildings();
-			GV.ingameCore.renderer2.redrawWalls();
+			GV.ingameCore.renderer2.redrawBuildings();
 			GV.ingameCore.resetAllPNNMatrices();
 			var iLim:int = GV.ingameCore.monstersOnScene.length;
 			for(var i:int = 0; i < iLim; i++)
@@ -512,10 +504,13 @@ package ManaMason
 		
 		public static function cleanup(): void
 		{
-			for each (var mc: MovieClip in activeWallHelpers.movieClips)
+			if (activeWallHelpers != null)
 			{
-				mc.stop();
-				mc = null;
+				for each (var mc: MovieClip in activeWallHelpers.movieClips)
+				{
+					mc.stop();
+					mc = null;
+				}
 			}
 			
 			activeWallHelpers = {"occupied":0, "movieClips": new Array()};
@@ -533,8 +528,6 @@ package ManaMason
 			buildHelperBitmaps["a"] = GV.ingameCore.cnt.bmpBuildHelperAmp;
 			buildHelperBitmaps["t"] = GV.ingameCore.cnt.bmpBuildHelperTower;
 			buildHelperBitmaps["r"] = GV.ingameCore.cnt.bmpBuildHelperTrap;
-			buildHelperBitmaps["p"] = GV.ingameCore.cnt.bmpBuildHelperPylon;
-			buildHelperBitmaps["l"] = GV.ingameCore.cnt.bmpBuildHelperLantern;
 		}
 		
 		private function initActiveBitmaps(): void
@@ -543,8 +536,6 @@ package ManaMason
 			activeBitmaps["a"] = {"occupied":0, "bitmaps": new Array()};
 			activeBitmaps["t"] = {"occupied":0, "bitmaps": new Array()};
 			activeBitmaps["r"] = {"occupied":0, "bitmaps": new Array()};
-			activeBitmaps["p"] = {"occupied":0, "bitmaps": new Array()};
-			activeBitmaps["l"] = {"occupied":0, "bitmaps": new Array()};
 			
 			activeWallHelpers = {"occupied":0, "movieClips": new Array()};
 		}
@@ -563,9 +554,9 @@ package ManaMason
 				for (var j:int = captureCorners[0][0]; j <= captureCorners[1][0]; j++) 
 				{
 					tileProcessed = false;
-					for (var type:String in GCFWManaMason.structureClasses)
+					for (var type:String in GCCSManaMason.structureClasses)
 					{
-						if (grid[i][j] is GCFWManaMason.structureClasses[type] && regGrid[i][j] == grid[i][j])
+						if (grid[i][j] is GCCSManaMason.structureClasses[type] && regGrid[i][j] == grid[i][j])
 						{
 							tileProcessed = true;
 							var struct: Structure = StructureFactory.CreateStructure(type, j - captureCorners[0][0], i - captureCorners[0][1]);
@@ -583,13 +574,13 @@ package ManaMason
 				}
 			}
 			exportBlueprintFile(bp);
-			GV.vfxEngine.createFloatingText4(GV.main.mouseX, GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20), "Blueprint captured!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13);
+			GV.vfxEngine.createFloatingText(GV.main.mouseX, GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20), "Blueprint captured!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13);
 			return bp;
 		}
 		
 		private static function exportBlueprintFile(bp: Blueprint): void
 		{
-			var blueprintsFolder:File = GCFWManaMason.storage.resolvePath("blueprints");
+			var blueprintsFolder:File = GCCSManaMason.storage.resolvePath("blueprints");
 			var bpFile:File = blueprintsFolder.resolvePath("Exported BP.txt");
 			var bpWriter:FileStream = new FileStream();
 			try

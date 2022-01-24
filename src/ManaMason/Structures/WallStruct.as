@@ -7,11 +7,11 @@ package ManaMason.Structures
 	
 	import ManaMason.BlueprintOptions;
 	import ManaMason.Utils.BlueprintOption;
-	import com.giab.games.gcfw.constants.BuildingType;
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.entity.Wall;
+	import com.giab.games.gccs.steam.constants.BuildingType;
+	import com.giab.games.gccs.steam.GV;
+	import com.giab.games.gccs.steam.entity.Wall;
 	 
-	import ManaMason.GCFWManaMason;
+	import ManaMason.GCCSManaMason;
 	import ManaMason.Structure;
 	
 	public class WallStruct extends Structure
@@ -22,7 +22,7 @@ package ManaMason.Structures
 			this.rendered = false;
 			this.size = 1;
 			this.buildingType = BuildingType.WALL;
-			this.spellButtonIndex = 12;
+			this.spellButtonIndex = 9;
 			this.xOffset = 0;
 			this.yOffset = 0;
 		}
@@ -60,7 +60,7 @@ package ManaMason.Structures
 		
 		public override function getCurrentManaCost(): Number
 		{
-			return GV.ingameCore.currentWallBuildingManaCost.g();
+			return Math.max(0, GV.ingameCore.currentWallBuildingManaCost.g());
 		}
 		
 		public override function insertGem(gem:Object): void

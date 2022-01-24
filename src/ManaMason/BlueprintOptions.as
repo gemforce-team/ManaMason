@@ -14,8 +14,8 @@ package ManaMason
 			new BlueprintOption(BlueprintOption.BUILD_ON_PATH, true, true),
 			new BlueprintOption(BlueprintOption.CONJURE_GEMS, true, true),
 			new BlueprintOption(BlueprintOption.PLACE_AMPLIFIERS, true, true),
-			new BlueprintOption(BlueprintOption.PLACE_LANTERNS, true, true),
-			new BlueprintOption(BlueprintOption.PLACE_PYLONS, true, true),
+			//new BlueprintOption(BlueprintOption.PLACE_LANTERNS, true, true),
+			//new BlueprintOption(BlueprintOption.PLACE_PYLONS, true, true),
 			new BlueprintOption(BlueprintOption.PLACE_TOWERS, true, true),
 			new BlueprintOption(BlueprintOption.PLACE_TRAPS, true, true),
 			new BlueprintOption(BlueprintOption.SHOW_UNPLACED, true, true),
@@ -42,5 +42,4 @@ package ManaMason
 			return options[optionName].value;
 		}
 	}
-
 }

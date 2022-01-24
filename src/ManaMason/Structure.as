@@ -1,8 +1,8 @@
 package ManaMason 
 {
 	import ManaMason.Utils.BlueprintOption;
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.entity.Gem;
+	import com.giab.games.gccs.steam.GV;
+	import com.giab.games.gccs.steam.entity.Gem;
 	import flash.display.MovieClip;
 	/**
 	 * ...
@@ -51,19 +51,19 @@ package ManaMason
 		{
 			var bX: Number = this.buildingGridX + (this.size - 1);
 			var bY: Number = this.buildingGridY + (this.size - 1);
-			return this.buildingGridX >= 0 && bX < 60 && this.buildingGridY >= 0 && bY < 38;
+			return this.buildingGridX >= 0 && bX < BuildHelper.FIELD_WIDTH && this.buildingGridY >= 0 && bY < BuildHelper.FIELD_HEIGHT;
 		}
 		
 		public function setBuildingCoords(mouseX:Number, mouseY:Number): void
 		{
-			var vX:Number = Math.floor((mouseX - 50) / 28);
-			var vY:Number = Math.floor((mouseY - 8) / 28);
+			var vX:Number = Math.floor((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE);
+			var vY:Number = Math.floor((mouseY - BuildHelper.TOP_UI_HEIGHT) / BuildHelper.TILE_SIZE);
 			
 			this.buildingGridX = vX + this.blueprintIndexX;
 			this.buildingGridY = vY + this.blueprintIndexY;
 			
-			this.buildingX = 50 + 28 * this.buildingGridX + xOffset;
-			this.buildingY = 8 + 28 * this.buildingGridY + yOffset;
+			this.buildingX = BuildHelper.WAVESTONE_WIDTH + BuildHelper.TILE_SIZE * this.buildingGridX + xOffset;
+			this.buildingY = BuildHelper.TOP_UI_HEIGHT + BuildHelper.TILE_SIZE * this.buildingGridY + yOffset;
 		}
 		
 		public function flipHorizontal(rowLength:int): void
