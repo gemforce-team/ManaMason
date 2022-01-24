@@ -13,7 +13,7 @@ package ManaMason
 	public class Structure 
 	{
 		public var type:String;
-		public var ghost:Object;
+		public var ghost:MovieClip;
 		
 		protected var blueprintIndexX:int;
 		protected var blueprintIndexY:int;
@@ -29,8 +29,8 @@ package ManaMason
 		public var rendered:Boolean;
 		public var size:int;
 		
-		protected var xOffset:int;
-		protected var yOffset:int;
+		public var xOffset:int;
+		public var yOffset:int;
 		
 		public var buildingType:String;
 		public var spellButtonIndex:int;
@@ -46,6 +46,7 @@ package ManaMason
 			setBuildingCoords(BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT);
 			this.gemTemplate = gem;
 			this.gem = null;
+			this.ghost = new MovieClip();
 		}
 		
 		public function fitsOnScene(): Boolean

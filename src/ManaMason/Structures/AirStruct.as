@@ -7,9 +7,12 @@ package ManaMason.Structures
 	
 	import ManaMason.BlueprintOptions;
 	import ManaMason.Structure;
+	import flash.display.MovieClip;
 	
 	public class AirStruct extends Structure
 	{
+		private static var airGhost:MovieClip = new MovieClip();
+		
 		public function AirStruct(bpIX:int, bpIY:int) 
 		{
 			super("-", bpIX, bpIY);
@@ -21,7 +24,7 @@ package ManaMason.Structures
 			this.buildingType = "AIR";
 			this.spellButtonIndex = -1;
 			
-			this.ghost = new Object();
+			this.ghost = airGhost;
 		}
 		
 		public override function castBuild(options: BlueprintOptions):void 

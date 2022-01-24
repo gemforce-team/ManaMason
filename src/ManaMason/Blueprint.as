@@ -5,6 +5,7 @@ package ManaMason
 	 * @author Hellrage
 	 */
 	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.entity.Gem;
 	import com.giab.games.gcfw.entity.Orblet;
 	import com.giab.games.gcfw.mcDyn.McBuildWallHelper;
 	import flash.display.Bitmap;
@@ -358,7 +359,6 @@ package ManaMason
 		{
 			for each(var structure:Structure in this.structures)
 			{
-				structure.ghost.visible = true;
 				structure.setBuildingCoords(mouseX, mouseY);
 				
 				if (!structure.fitsOnScene() || structure.type == "-")
@@ -381,6 +381,7 @@ package ManaMason
 				else
 					structure.ghost.transform.colorTransform = new ColorTransform();
 				
+				structure.ghost.visible = true;
 				structure.ghost.x = structure.buildingX;
 				structure.ghost.y = structure.buildingY;
 			}
@@ -467,6 +468,8 @@ package ManaMason
 				if (structure.type == "-")
 					continue;
 					
+				structure.ghost.removeChildren();
+					
 				var placeable: Boolean = structure.placeable(blueprintOptions, false);
 				if (structure.type == "w")
 				{
@@ -474,11 +477,11 @@ package ManaMason
 					{
 						activeWallHelpers.movieClips.push(new McBuildWallHelper());
 					}
-					structure.ghost = activeWallHelpers.movieClips[activeWallHelpers.occupied];
+					structure.ghost.addChild(activeWallHelpers.movieClips[activeWallHelpers.occupied]);
 					structure.ghost.x = structure.buildingX;
 					structure.ghost.y = structure.buildingY;
 					structure.ghost.rotation = 0;
-					structure.ghost.gotoAndStop(1);
+					activeWallHelpers.movieClips[activeWallHelpers.occupied].gotoAndStop(1);
 					activeWallHelpers.occupied++;
 				}
 				else
@@ -488,25 +491,20 @@ package ManaMason
 					{
 						typeBitmaps.bitmaps.push(new Bitmap(BuildHelper.bitmaps[structure.type].bitmapData));
 					}
-					structure.ghost = typeBitmaps.bitmaps[typeBitmaps.occupied];
+					structure.ghost.addChild(typeBitmaps.bitmaps[typeBitmaps.occupied]);
+					if (structure.gem != null)
+					{
+						structure.gem.mc.alpha = 0.6;
+						structure.gem.mc.scaleX = structure.gem.mc.scaleY = 0.75;
+						structure.gem.mc.x = structure.size * 0.65 * BuildHelper.TILE_SIZE + ((structure.type=="r")? (-BuildHelper.TILE_SIZE/2) : (structure.xOffset));
+						structure.gem.mc.y = structure.size * 0.65 * BuildHelper.TILE_SIZE + ((structure.type=="r")? (-BuildHelper.TILE_SIZE/2) : (structure.yOffset));
+						structure.ghost.addChildAt(structure.gem.mc,0);
+					}
 					structure.ghost.x = structure.buildingX;
 					structure.ghost.y = structure.buildingY;
 					typeBitmaps.occupied++;
 				}
-				structure.rendered = true;
-			}
-			
-			for each (var type:Object in activeBitmaps)
-			{
-				for (var i:int = 0; i < type.occupied; i++)
-				{
-					this.addChild(type.bitmaps[i]);
-				}
-			}
-			
-			for (var wmci:int = 0; wmci < activeWallHelpers.occupied; wmci++)
-			{
-				this.addChild(activeWallHelpers.movieClips[wmci]);
+				this.addChild(structure.ghost);
 			}
 		}
 		
@@ -572,8 +570,16 @@ package ManaMason
 						{
 							tileProcessed = true;
 							var struct: Structure = StructureFactory.CreateStructure(type, j - captureCorners[0][0], i - captureCorners[0][1]);
-							if (grid[i][j].hasOwnProperty("insertedGem"))
-								struct.gem = grid[i][j].insertedGem;
+							if (grid[i][j].hasOwnProperty("insertedGem") && grid[i][j].insertedGem != null)
+							{
+								var newGem: Gem =  GV.ingameSpellCaster.cloneGem(grid[i][j].insertedGem);
+								newGem.manaLeeched = 0;
+								newGem.kills.s(0);
+								newGem.hits.s(0);
+								newGem.recalculateSds();
+								GV.gemBitmapCreator.giveGemBitmaps(newGem);
+								struct.gem = newGem;
+							}
 							bp.structures.push(struct);
 							break;
 						}
