@@ -49,8 +49,8 @@ package ManaMason
 		private var mouseMoveBPUpdateHandler:Function;
 		
 		private var buildingMode:Boolean;
-		private var captureMode:Boolean;
-		private var captureCorners: Object;
+		private var selectionMode:Boolean;
+		private var selectedCorners: Object;
 		private var shiftKeyPressed:Boolean;
 		
 		private var _crosshair:Shape;
@@ -82,11 +82,11 @@ package ManaMason
 			
 			this.blueprints = new Array();
 			this.shiftKeyPressed = false;
-			this.captureMode = false;
-			this.captureCorners = new Object();
+			this.selectionMode = false;
+			this.selectedCorners = new Object();
 			blueprintOptions = new BlueprintOptions();
-			captureCorners[0] = null;
-			captureCorners[1] = null;
+			selectedCorners[0] = null;
+			selectedCorners[1] = null;
 			
 			structureClasses = new Object();
 			structureClasses['w'] = Wall;
@@ -105,6 +105,8 @@ package ManaMason
 			
 			initInfoPanelTitle();
 			
+			reloadBlueprintList();
+			
 			this.currentBlueprintIndex = -1;
 			
 			var self: GCFWManaMason = this;
@@ -114,7 +116,6 @@ package ManaMason
 					self.updateBPOrigin();
 					self.redrawRetinaHud();
 				}
-				
 			};
 			
 			addEventListeners();
@@ -163,8 +164,8 @@ package ManaMason
 		{
 			if(this.buildingMode)
 				exitBuildingMode();
-			if (this.captureMode)
-				exitCaptureMode();
+			if (this.selectionMode)
+				exitSelectionMode();
 				
 			cleanupAllBlueprints();
 				
@@ -276,7 +277,7 @@ package ManaMason
 			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
 			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true, 10);
 			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
-			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
+			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.ENTER_FRAME, drawSelectionOverlay);
 			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
 			//ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
 			this.infoPanel.addEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
@@ -315,7 +316,7 @@ package ManaMason
 			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
 			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
 			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
-			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(Event.ENTER_FRAME, drawCaptureOverlay);
+			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(Event.ENTER_FRAME, drawSelectionOverlay);
 			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
 			//ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
 			this.infoPanel.removeEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
@@ -329,8 +330,8 @@ package ManaMason
 			{
 				if (this.buildingMode)
 					exitBuildingMode();
-				if (this.captureMode)
-					exitCaptureMode();
+				if (this.selectionMode)
+					exitSelectionMode();
 			}
 			
 			if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter capture mode").matches(pE))
@@ -338,9 +339,9 @@ package ManaMason
 				if (this.buildingMode)
 					exitBuildingMode();
 					
-				if (this.captureMode)
+				if (this.selectionMode)
 				{
-					exitCaptureMode();
+					exitSelectionMode();
 				}
 				else
 				{
@@ -351,8 +352,8 @@ package ManaMason
 			}
 			else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter building mode").matches(pE))
 			{
-				if (this.captureMode)
-					exitCaptureMode();
+				if (this.selectionMode)
+					exitSelectionMode();
 					
 				if (this.buildingMode)
 				{
@@ -423,11 +424,11 @@ package ManaMason
 			this.infoPanelTitle.x = 0;
 			infoPanel.addTitle(this.infoPanelTitle);
 			
-			this.captureMode = true;
+			this.selectionMode = true;
 			GV.mcInfoPanel.visible = false;
 			showInfoPanel();
 			discardAllMouseInput();
-			drawCaptureOverlay(null);
+			drawSelectionOverlay(null);
 		}
 		
 		private function enterBuildingMode(): void
@@ -439,9 +440,6 @@ package ManaMason
 
 			if(!(GV.ingameCore.actionStatus < ActionStatus.DRAGGING_GEM_FROM_TOWER_IDLE || GV.ingameCore.actionStatus >= ActionStatus.CAST_ENHANCEMENT_INITIATED))
 				return;
-				
-			if (this.currentBlueprintIndex == -1)
-				this.reloadBlueprintList();
 				
 			if (this.currentBlueprintIndex == -1)
 			{
@@ -541,57 +539,57 @@ package ManaMason
 			{
 				this.selectedBlueprint.castBuild(blueprintOptions);
 			}
-			else if (this.captureMode)
+			else if (this.selectionMode)
 			{
 					
 				var vX:Number = Math.floor((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE);
 				var vY:Number = Math.floor((mouseY - BuildHelper.TOP_UI_HEIGHT) / BuildHelper.TILE_SIZE);
 				
-				if (this.captureCorners[0] == null)
+				if (this.selectedCorners[0] == null)
 				{
-					this.captureCorners[0] = [vX, vY];
-					drawCaptureOverlay(mE);
+					this.selectedCorners[0] = [vX, vY];
+					drawSelectionOverlay(mE);
 				}
-				else if (this.captureCorners[1] == null)
+				else if (this.selectedCorners[1] == null)
 				{
-					var cx: Number = this.captureCorners[0][0];
-					var cy: Number = this.captureCorners[0][1];
+					var cx: Number = this.selectedCorners[0][0];
+					var cy: Number = this.selectedCorners[0][1];
 					if (vX -cx <= 0 && vY - cy <= 0)
 					{
-						this.captureCorners[0] = [vX, vY];
-						this.captureCorners[1] = [cx, cy];
+						this.selectedCorners[0] = [vX, vY];
+						this.selectedCorners[1] = [cx, cy];
 					}
 					else if(vX -cx >= 0 && vY - cy >= 0)
 					{
-						this.captureCorners[1] = [vX, vY];
-						this.captureCorners[0] = [cx, cy];
+						this.selectedCorners[1] = [vX, vY];
+						this.selectedCorners[0] = [cx, cy];
 					}
 					else
 					{
 						cx = vX;
-						vX = this.captureCorners[0][0];
+						vX = this.selectedCorners[0][0];
 						if (vX -cx <= 0 && vY - cy <= 0)
 						{
-							this.captureCorners[0] = [vX, vY];
-							this.captureCorners[1] = [cx, cy];
+							this.selectedCorners[0] = [vX, vY];
+							this.selectedCorners[1] = [cx, cy];
 						}
 						else if(vX -cx >= 0 && vY - cy >= 0)
 						{
-							this.captureCorners[1] = [vX, vY];
-							this.captureCorners[0] = [cx, cy];
+							this.selectedCorners[1] = [vX, vY];
+							this.selectedCorners[0] = [cx, cy];
 						}
 						else
 						{
-							exitCaptureMode();
+							exitSelectionMode();
 							return;
 						}
 					}
 					
-					var capturedBP: Blueprint = Blueprint.tryCaptureFromField(this.captureCorners).setBlueprintOptions(blueprintOptions);
+					var capturedBP: Blueprint = Blueprint.tryCaptureFromField(this.selectedCorners).setBlueprintOptions(blueprintOptions);
 					blueprints.unshift(capturedBP);
 					currentBlueprintIndex = 0;
 					selectedBlueprint = blueprints[currentBlueprintIndex];
-					exitCaptureMode();
+					exitSelectionMode();
 				}
 			}
 			else
@@ -607,17 +605,17 @@ package ManaMason
 				exitBuildingMode();
 			}
 			
-			if (this.captureMode)
+			if (this.selectionMode)
 			{
-				exitCaptureMode();
+				exitSelectionMode();
 			}
 		}
 		
-		private function exitCaptureMode(): void
+		private function exitSelectionMode(): void
 		{
-			this.captureCorners[0] = null;
-			this.captureCorners[1] = null;
-			this.captureMode = false;
+			this.selectedCorners[0] = null;
+			this.selectedCorners[1] = null;
+			this.selectionMode = false;
 			hideInfoPanel();
 			GV.mcInfoPanel.visible = true;
 			restoreAllMouseInput();
@@ -651,9 +649,9 @@ package ManaMason
 				this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY);
 		}
 		
-		private function drawCaptureOverlay(e: Event): void
+		private function drawSelectionOverlay(e: Event): void
 		{
-			if (!this.captureMode)
+			if (!this.selectionMode)
 				return;
 				
 			var mX: Number = GV.main.cntScreens.cntIngame.root.mouseX;
@@ -671,21 +669,21 @@ package ManaMason
 					rHUD.removeChild(crosshair);*/
 				crosshair.graphics.clear();
 				crosshair.graphics.lineStyle(2, 0x00FF00, 1);
-				if (this.captureCorners[0] == null) {
+				if (this.selectedCorners[0] == null) {
 					this.infoPanelTitle.text = "Please click one corner of your selection.";
 					crosshair.graphics.moveTo(BuildHelper.WAVESTONE_WIDTH, mY);
 					crosshair.graphics.lineTo(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH+BuildHelper.WAVESTONE_WIDTH, mY);
 					crosshair.graphics.moveTo(mX, BuildHelper.TOP_UI_HEIGHT);
 					crosshair.graphics.lineTo(mX, BuildHelper.TILE_SIZE * BuildHelper.FIELD_HEIGHT+BuildHelper.TOP_UI_HEIGHT);
 				}
-				else if (this.captureCorners[1] == null)
+				else if (this.selectedCorners[1] == null)
 				{
 					this.infoPanelTitle.text = "Please click the opposite corner of your selection.";
-					crosshair.graphics.moveTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][0]), BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][1]));
-					crosshair.graphics.lineTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][0]), mY);
+					crosshair.graphics.moveTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][0]), BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][1]));
+					crosshair.graphics.lineTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][0]), mY);
 					crosshair.graphics.lineTo(mX, mY);
-					crosshair.graphics.lineTo(mX, BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][1]));
-					crosshair.graphics.lineTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][0]), BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.captureCorners[0][1]));
+					crosshair.graphics.lineTo(mX, BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][1]));
+					crosshair.graphics.lineTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][0]), BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][1]));
 				}
 			}
 		}
