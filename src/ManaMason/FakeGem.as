@@ -31,7 +31,5 @@ package ManaMason
 			this.targetPriority = 0;
 			this.rangeMultiplier = 1;
 		}
-		
 	}
-
 }
