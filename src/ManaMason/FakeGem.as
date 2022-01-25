@@ -6,6 +6,8 @@ package ManaMason
 	 */
 	public class FakeGem 
 	{
+		public var specification:String;
+		public var gemId:int;
 		public var gemGrade:int;
 		public var gemType:int;
 		public var targetPriority:int;
@@ -15,8 +17,10 @@ package ManaMason
 		public var inventorySlot:int;
 		public var rangeMultiplier:Number;
 		
-		public function FakeGem(type:int, grade:int) 
+		public function FakeGem(spec:String, id:int, type:int, grade:int) 
 		{
+			this.specification = spec;
+			this.gemId = id;
 			this.gemType = type;
 			this.gemGrade = grade;
 			this.usesGemsmith = false;

@@ -161,6 +161,8 @@ package ManaMason
 			if (this.captureMode)
 				exitCaptureMode();
 			
+			cleanupAllBlueprints();
+			
 			var newBlueprints: Array = new Array();
 			var blueprintsFolder:File = storage.resolvePath("blueprints");
 			
@@ -168,9 +170,11 @@ package ManaMason
 			for(var f:int = 0; f < fileList.length; f++)
 			{
 				var fileName:String = fileList[f].name;
-				if (fileName.substring(fileName.length - 4, fileName.length) == ".txt")
+				var file:File = fileList[f];
+
+				if (file.extension == "txt")
 				{
-					var blueprint:Blueprint = Blueprint.fromFile(blueprintsFolder.resolvePath(fileName).nativePath, fileName);
+					var blueprint:Blueprint = Blueprint.fromFile(file.nativePath, fileName);
 					if(blueprint != Blueprint.emptyBlueprint)
 						newBlueprints.push(blueprint.setBlueprintOptions(blueprintOptions));
 					else
@@ -183,17 +187,10 @@ package ManaMason
 			
 			ManaMasonMod.logger.log("reloadBlueprintList", "Found " + newBlueprints.length + " blueprint files.");
 			
-			if (newBlueprints.length == 0)
-			{
-				this.currentBlueprintIndex = -1;
-			}
-			else
-			{
-				this.currentBlueprintIndex = 0;
-				this.selectedBlueprint = newBlueprints[this.currentBlueprintIndex];
-			}
 			newBlueprints.sortOn("name");
 			this.blueprints = newBlueprints;
+			
+			selectBlueprintAt(0);
 		}
 		
 		public function cycleSelectedBlueprint(increment:int): void
@@ -209,13 +206,31 @@ package ManaMason
 			else if(this.currentBlueprintIndex > blueprints.length - 1)
 				this.currentBlueprintIndex = 0;
 				
-			GV.main.cntScreens.cntIngame.removeChild(this.selectedBlueprint);
-			this.selectedBlueprint = this.blueprints[this.currentBlueprintIndex];
-			this.infoPanelTitle.text = this.selectedBlueprint.blueprintName;
-			this.selectedBlueprint.resetGhosts();
-			this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
-			GV.main.cntScreens.cntIngame.addChild(this.selectedBlueprint);
-			drawBuildingOverlay(null);
+			selectBlueprintAt(this.currentBlueprintIndex);
+		}
+		
+		public function selectBlueprintAt(index: int): void
+		{
+			if (index < 0 || index >= this.blueprints.length)
+			{
+				this.selectedBlueprint = Blueprint.emptyBlueprint;
+				this.currentBlueprintIndex = -1;
+			}
+			else
+			{
+				this.currentBlueprintIndex = index;
+				if(this.buildingMode)
+					GV.main.cntScreens.cntIngame.removeChild(this.selectedBlueprint);
+				this.selectedBlueprint = this.blueprints[this.currentBlueprintIndex];
+				this.infoPanelTitle.text = this.selectedBlueprint.blueprintName;
+				this.selectedBlueprint.resetGhosts();
+				this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+				if (this.buildingMode)
+				{
+					GV.main.cntScreens.cntIngame.addChild(this.selectedBlueprint);
+					drawBuildingOverlay(null);
+				}
+			}
 		}
 		
 		private function prepareFolders(): void
@@ -280,8 +295,14 @@ package ManaMason
 			
 			if(this.buildingMode)
 				exitBuildingMode();
-				
-			Blueprint.cleanup();
+			
+			cleanupAllBlueprints();
+		}
+		
+		private function cleanupAllBlueprints(): void
+		{
+			for each(var bp: Blueprint in this.blueprints)
+				bp.cleanup();
 		}
 		
 		private function removeEventListeners(): void
@@ -392,7 +413,7 @@ package ManaMason
 				return;
 				
 			GV.ingameCore.cnt.cntRetinaHud.addChild(crosshair);
-			infoPanel.setup(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH, 20, BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT, 4278190080);
+			infoPanel.setup(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH, 20, BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT, 3.087007744E9);
 			this.infoPanelTitle.width = this.infoPanel.width;
 			this.infoPanelTitle.y = 3;
 			this.infoPanelTitle.x = 0;
@@ -432,7 +453,7 @@ package ManaMason
 				GV.main.cntScreens.cntIngame.addChild(this.selectedBlueprint);
 				changeRightSideUIVisibility(false);
 				
-				infoPanel.setup(1088 - BuildHelper.WAVESTONE_WIDTH - BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH - 4, BuildHelper.TILE_SIZE * BuildHelper.FIELD_HEIGHT, BuildHelper.WAVESTONE_WIDTH + BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH + 4, BuildHelper.TOP_UI_HEIGHT, 0);
+				infoPanel.setup(1088 - BuildHelper.WAVESTONE_WIDTH - BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH - 4, BuildHelper.TILE_SIZE * BuildHelper.FIELD_HEIGHT, BuildHelper.WAVESTONE_WIDTH + BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH + 4, BuildHelper.TOP_UI_HEIGHT, 3.087007744E9);
 				
 				this.infoPanelTitle.text = this.selectedBlueprint.blueprintName;
 				this.infoPanelTitle.x = 0;

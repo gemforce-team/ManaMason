@@ -3,6 +3,7 @@ package ManaMason
 	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gccs.steam.GV;
 	import com.giab.games.gccs.steam.entity.Gem;
+	import flash.display.Bitmap;
 	import flash.display.MovieClip;
 	/**
 	 * ...
@@ -12,7 +13,7 @@ package ManaMason
 	public class Structure 
 	{
 		public var type:String;
-		public var ghost:Object;
+		public var ghost:MovieClip;
 		
 		protected var blueprintIndexX:int;
 		protected var blueprintIndexY:int;
@@ -36,6 +37,7 @@ package ManaMason
 		
 		public var gemTemplate:FakeGem;
 		public var gem: Gem;
+		public var gemGhost:Bitmap;
 		
 		public function Structure(type:String, bpIX:int, bpIY:int, gem:FakeGem = null) 
 		{
@@ -45,6 +47,7 @@ package ManaMason
 			setBuildingCoords(50, 8);
 			this.gemTemplate = gem;
 			this.gem = null;
+			this.ghost = new MovieClip();
 		}
 		
 		public function fitsOnScene(): Boolean
@@ -91,7 +94,7 @@ package ManaMason
 				if (this.gem != null)
 					newGem = BuildHelper.dupeGem(bpo, this.gem);
 				else
-					newGem = BuildHelper.CreateGemFromTemplate(this.gemTemplate, bpo);
+					newGem = BuildHelper.CreateGemFromTemplate(this.gemTemplate);
 				this.insertGem(newGem);
 			}
 		}
@@ -99,6 +102,27 @@ package ManaMason
 		public function toString(): String
 		{
 			return this.type + "(" + this.blueprintIndexX + ";" + this.blueprintIndexY + ") at " + this.buildingX + ";" + this.buildingY;
+		}
+		
+		public function exportGemSpecToString(): String
+		{
+			if (this.gem == null)
+				return null;
+				
+			var res:String = "";
+			var maxComponent:Object = {"type": -1, "value": -1};
+			for (var i:String in this.gem.manaValuesByComponent)
+			{
+				var component:Number = this.gem.manaValuesByComponent[i].g();
+				if (component != 0 && component > maxComponent.value)
+				{
+					maxComponent.type = (Number)(i);
+					maxComponent.value = component;
+				}
+			}
+			res += [ManaMasonMod.gemTypeToName[maxComponent.type], gem.grade.g().toString(), gem.targetPriority.toString(), gem.rangeRatio.g().toString()].join(",");
+			
+			return res;
 		}
 		
 		public function incrementManaCost(): void
@@ -116,6 +140,12 @@ package ManaMason
 			if (gem == null)
 				return;
 			GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX].insertGem(gem);
+		}
+
+		public function fitGemGhostImage(): void
+		{
+			this.gemGhost.alpha = 0.6;
+			this.ghost.addChildAt(this.gemGhost,0);
 		}
 
 		public function isOnPath(): Boolean

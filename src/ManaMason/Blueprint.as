@@ -5,6 +5,7 @@ package ManaMason
 	 * @author Hellrage
 	 */
 	import com.giab.games.gccs.steam.GV;
+	import com.giab.games.gccs.steam.entity.Gem;
 	import com.giab.games.gccs.steam.entity.Orblet;
 	import com.giab.games.gccs.steam.mcDyn.McBuildWallHelper;
 	import flash.display.Bitmap;
@@ -17,7 +18,6 @@ package ManaMason
 	
 	public class Blueprint extends MovieClip
 	{
-		private var structureGrid:Array;
 		private var blueprintOptions: BlueprintOptions;
 		private var lastOrigin: Object;
 		
@@ -32,7 +32,7 @@ package ManaMason
 		private static var activeBitmaps:Object;
 		private static var activeWallHelpers:Object;
 		private static var buildHelperBitmaps:Object;
-		private static var allowedSymbols:Array = ["-", "a", "t", "w", "r"];
+		private static var allowedSymbols:Array = ["a", "t", "w", "r"];
 		
 		private static var _emptyBlueprint:Blueprint;
 		public static function get emptyBlueprint():Blueprint 
@@ -50,8 +50,8 @@ package ManaMason
 				initActiveBitmaps();
 			if(buildHelperBitmaps == null)
 				initBuildingHelpers();
-				
-			this.structureGrid = new Array();
+			
+			this.blueprintName = "Empty BP";
 			this.structures = new Array();
 			this.gemTemplates = new Object();
 			this.lastOrigin = new Object();
@@ -85,6 +85,8 @@ package ManaMason
 			var result:Blueprint = new Blueprint();
 			var parts:Array = bpString.split("Gems:"+File.lineEnding);
 			var grid:Array = parts[0].split(File.lineEnding);
+			for (var row: String in grid)
+				grid[row] = grid[row].split("");
 			
 			if (parts.length > 1)
 				parseGemTemplates(parts[1].split(File.lineEnding), result);
@@ -104,37 +106,32 @@ package ManaMason
 		{
 			res.dimX = grid[0].length;
 			res.dimY = grid.length;
-			for (var c:int = 0; c < grid[0].length; c++)
+			for (var r:int = 0; r < grid.length; r++)
 			{
-				for (var r:int = 0; r < grid.length; r++)
+				for (var c:int = 0; c < grid[0].length; c++)
 				{
-					var char:String = grid[r].charAt(c);
-					//ManaMasonMod.logger.log("fromFile", "Row\t" + rows[r] + "; Looking at symbol " + r + ";" + c + " : " + char);
+					var char:String = grid[r][c];
 					if (allowedSymbols.indexOf(char) != -1)
 					{
-						if (res.structureGrid[c] != undefined)
-						{
-							if (res.structureGrid[c][r] != undefined)
-								continue;
-						}
-						//ManaMasonMod.logger.log("fromFile", "Setting " + char);
-						//ManaMasonMod.logger.log("fromFile", "Pushing a new structure " + char + " at " + r + ";" + c);
 						var structure:Structure = StructureFactory.CreateStructure(char, c, r);
-						res.setStructureGridSlot(c, r, structure);
+						res.structures.push(structure);
 						if (structure.size == 2)
 						{
 							if (grid[r + 1] != undefined)
 							{
-								var gemIdString:String = grid[r + 1].charAt(c) + grid[r + 1].charAt(c + 1);
+								var gemIdString:String = grid[r + 1][c] + grid[r + 1][c + 1];
 								var gemId:int = parseInt(gemIdString);
 								if (!isNaN(gemId))
 								{
-									structure.gemTemplate = res.gemTemplates[gemId] || null;
+									structure.gem = BuildHelper.CreateGemFromTemplate(res.gemTemplates[gemId] || null);
+									structure.fitGemGhostImage();
 								}
+								grid[r + 1][c] = grid[r + 1][c + 1] = "-";
 							}
+							if(grid[r][c + 1] != undefined)
+								grid[r][c + 1] = "-";
 						}
 					}
-					//ManaMason.ManaMason.logger.log("fromFile", "Done processing symbol: " + r + ";" + c);
 				}
 			}
 			return res;
@@ -146,11 +143,11 @@ package ManaMason
 			{
 				if (template.length < 3)
 					continue;
-				var gem:FakeGem = new FakeGem(-1, 0);
 				var parts:Array = template.split("=");
 				var gemId:int = parseInt(parts[0]);
 				if (isNaN(gemId))
 					continue;
+				var gem:FakeGem = new FakeGem(parts[1], gemId, -1, 0);
 				var props:Array = parts[1].split(",");
 				res.gemTemplates[gemId] = applyProps(gem, props);
 			}
@@ -163,28 +160,31 @@ package ManaMason
 			{
 				switch (props[0]) 
 				{
-					case "y":
 					case "yellow":
-						gem.gemType = 0;
-						break;
-					case "o":
-					case "orange":
 						gem.gemType = 1;
 						break;
-					case "r":
-					case "red":
-						gem.gemType = 2;
+					case "orange":
+						gem.gemType = 0;
 						break;
-					case "p":
-					case "purple":
+					case "red":
 						gem.gemType = 3;
 						break;
-					case "g":
+					case "purple":
+						gem.gemType = 8;
+						break;
 					case "green":
 						gem.gemType = 4;
 						break;
-					case "b":
 					case "blue":
+						gem.gemType = 7;
+						break;
+					case "white":
+						gem.gemType = 2;
+						break;
+					case "black":
+						gem.gemType = 6;
+						break;
+					case "cyan":
 						gem.gemType = 5;
 						break;
 					case "inv":
@@ -271,65 +271,6 @@ package ManaMason
 			}
 		}
 		
-		private function setStructureGridSlot(row:int, column:int, value:Structure): void
-		{
-			if (this.structureGrid[row] == undefined)
-				this.structureGrid[row] = new Array();
-				
-			if (this.structureGrid[row][column] == undefined)
-			{
-				this.structureGrid[row][column] = value;
-				this.structures.push(value);
-			}
-			else
-				return;
-			
-			if (value.size == 2)
-			{
-				this.structureGrid[row][column+1] = value;
-				if (this.structureGrid[row+1] == undefined)
-					this.structureGrid[row+1] = new Array();
-				this.structureGrid[row+1][column] = value;
-				this.structureGrid[row+1][column+1] = value;
-			}
-			//ManaMasonMod.logger.log("setStructureGridSlot", "Pushed a new structure " + value.toString());
-		}
-		
-		private static function createTestBlueprint(): Blueprint
-		{
-			var res:Blueprint = new Blueprint();
-			res.structureGrid = new Array();
-			var amp1:Structure = new Structure("a", 0, 2);
-			var amp2:Structure = new Structure("a", 2, 0);
-			var amp3:Structure = new Structure("a", 2, 4);
-			var amp4:Structure = new Structure("a", 4, 2);
-			var tow1:Structure = new Structure("t", 2, 2);
-			var walls:Array = new Array();
-			walls.push(new Structure("w", 2, 0));
-			walls.push(new Structure("w", 2, 1));
-			walls.push(new Structure("w", 2, 2));
-			walls.push(new Structure("w", 4, 4));
-			walls.push(new Structure("w", 4, 8));
-			walls.push(new Structure("w", 5, 4));
-			walls.push(new Structure("w", 5, 8));
-			var air:Structure = new Structure("air", 0, 0);
-			/*res.structureGrid.push(new Array(air, air, air, air, air, amp1, amp1, air, air));
-			res.structureGrid.push(new Array(air, air, air, air, air, amp1, amp1, air, air));
-			res.structureGrid.push(new Array(walls[0], walls[1], walls[2], amp2, amp2, tow1, tow1, amp3, amp3));
-			res.structureGrid.push(new Array(air, air, air, amp2, amp2, tow1, tow1, amp3, amp3));
-			res.structureGrid.push(new Array(air, air, air, air, walls[3], amp4, amp4, air, walls[4]));
-			res.structureGrid.push(new Array(air, air, air, air, walls[5], amp4, amp4, air, walls[6]));*/
-			
-			res.structureGrid.push(new Array(air, air, amp1, amp1, air, air));
-			res.structureGrid.push(new Array(air, air, amp1, amp1, air, air));
-			res.structureGrid.push(new Array(amp2, amp2, tow1, tow1, amp3, amp3));
-			res.structureGrid.push(new Array(amp2, amp2, tow1, tow1, amp3, amp3));
-			res.structureGrid.push(new Array(air, air, amp4, amp4, air, air));
-			res.structureGrid.push(new Array(air, air, amp4, amp4, air, air));
-			
-			return res;
-		}
-		
 		public function updateOrigin(mouseX:Number, mouseY:Number, force: Boolean = false): void
 		{
 			var vX:Number = Math.floor((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE);
@@ -351,10 +292,9 @@ package ManaMason
 		{
 			for each(var structure:Structure in this.structures)
 			{
-				structure.ghost.visible = true;
 				structure.setBuildingCoords(mouseX, mouseY);
 				
-				if (!structure.fitsOnScene() || structure.type == "-")
+				if (!structure.fitsOnScene())
 				{
 					structure.ghost.visible = false;
 					continue;
@@ -374,6 +314,9 @@ package ManaMason
 				else
 					structure.ghost.transform.colorTransform = new ColorTransform();
 				
+				structure.ghost.visible = true;
+				if(structure.gem != null)
+					structure.gem.mc.visible = true;
 				structure.ghost.x = structure.buildingX;
 				structure.ghost.y = structure.buildingY;
 			}
@@ -459,6 +402,8 @@ package ManaMason
 				if (structure.type == "-")
 					continue;
 					
+				structure.ghost.removeChildren();
+				
 				var placeable: Boolean = structure.placeable(blueprintOptions, false);
 				if (structure.type == "w")
 				{
@@ -480,30 +425,35 @@ package ManaMason
 					{
 						typeBitmaps.bitmaps.push(new Bitmap(BuildHelper.bitmaps[structure.type].bitmapData));
 					}
-					structure.ghost = typeBitmaps.bitmaps[typeBitmaps.occupied];
+					structure.ghost.addChild(typeBitmaps.bitmaps[typeBitmaps.occupied]);
+					if (structure.gem != null)
+					{
+						structure.fitGemGhostImage();
+					}
 					structure.ghost.x = structure.buildingX;
 					structure.ghost.y = structure.buildingY;
 					typeBitmaps.occupied++;
 				}
-				structure.rendered = true;
-			}
-			
-			for each (var type:Object in activeBitmaps)
-			{
-				for (var i:int = 0; i < type.occupied; i++)
-				{
-					this.addChild(type.bitmaps[i]);
-				}
-			}
-			
-			for (var wmci:int = 0; wmci < activeWallHelpers.occupied; wmci++)
-			{
-				this.addChild(activeWallHelpers.movieClips[wmci]);
+				this.addChild(structure.ghost);
 			}
 		}
 		
-		public static function cleanup(): void
+		public function cleanup(): void
 		{
+			for each(var struct: Structure in this.structures)
+			{
+				struct.gem = null;
+			}
+		}
+		
+		public function cleanupOnUnload(): void
+		{
+			for each(var struct: Structure in this.structures)
+			{
+				if(struct.gem != null)
+					(Bitmap)(struct.gem.mc.getChildAt(0)).bitmapData = null;
+			}
+			
 			if (activeWallHelpers != null)
 			{
 				for each (var mc: MovieClip in activeWallHelpers.movieClips)
@@ -558,18 +508,20 @@ package ManaMason
 					{
 						if (grid[i][j] is GCCSManaMason.structureClasses[type] && regGrid[i][j] == grid[i][j])
 						{
-							tileProcessed = true;
 							var struct: Structure = StructureFactory.CreateStructure(type, j - captureCorners[0][0], i - captureCorners[0][1]);
-							if (grid[i][j].hasOwnProperty("insertedGem"))
-								struct.gem = grid[i][j].insertedGem;
+							if (grid[i][j].hasOwnProperty("insertedGem") && grid[i][j].insertedGem != null)
+							{
+								var newGem: Gem=  GV.ingameSpellCaster.cloneGem(grid[i][j].insertedGem);
+								newGem.kills.s(0);
+								newGem.hits.s(0);
+								newGem.recalculateSds();
+								GV.gemBitmapCreator.giveGemBitmaps(newGem);
+								GV.ingameCore.cnt.cntGemsInInventory.removeChild(newGem.mc);
+								struct.gem = newGem;
+							}
 							bp.structures.push(struct);
 							break;
 						}
-					}
-					
-					if (!tileProcessed)
-					{
-						bp.structures.push(StructureFactory.CreateStructure("-", j - captureCorners[0][0], i - captureCorners[0][1]));
 					}
 				}
 			}
@@ -597,14 +549,40 @@ package ManaMason
 		public function exportToString(): String
 		{
 			var res:String = "";
-			
+			var usedGems:Object = new Object();
+			var gemId:int = 0;
 			var grid: Object = new Object();
 			for (var row: Number = 0; row < this.dimY; row++)
-				grid[row] = new Object();
-			
-			for(var struct:Object in this.structures) 
 			{
-				grid[this.structures[struct].blueprintY][this.structures[struct].blueprintX] = this.structures[struct].type;
+				grid[row] = new Object();
+				for (var c: Number = 0; c < this.dimX; c++)
+					grid[row][c] = "-";
+			}
+			
+			for each(var struct:Structure in this.structures) 
+			{
+				grid[struct.blueprintY][struct.blueprintX] = struct.type;
+				if (struct.size == 2)
+				{
+					if (struct.gem != null && gemId <= 99)
+					{
+						var spec: String = struct.exportGemSpecToString();
+						if (spec != null)
+						{
+							var usedId:int;
+							if (usedGems[spec])
+								usedId = (int)(usedGems[spec]);
+							else
+							{
+								gemId++;
+								usedGems[spec] = gemId;
+								usedId = gemId;
+							}
+							grid[struct.blueprintY + 1][struct.blueprintX] = Math.floor(usedId / 10);
+							grid[struct.blueprintY + 1][struct.blueprintX + 1] = usedId % 10;
+						}
+					}
+				}
 			}
 			
 			for (var i:Number = 0; i < this.dimY; i++) 
@@ -614,6 +592,17 @@ package ManaMason
 					res += grid[i][j];
 				}
 				res += "\r\n";
+			}
+			if (gemId > 0)
+			{
+				res += "Gems:\r\n";
+				for (var gem: String in usedGems)
+				{
+					var gemIdString:String = (int)(usedGems[gem]).toString();
+					if (gemIdString.length == 1)
+						res += 0;
+					res += gemIdString + "=" + gem + "\r\n";
+				}
 			}
 			return res;
 		}

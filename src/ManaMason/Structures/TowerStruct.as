@@ -10,6 +10,7 @@ package ManaMason.Structures
 	import com.giab.games.gccs.steam.constants.BuildingType;
 	import com.giab.games.gccs.steam.GV;
 	import com.giab.games.gccs.steam.entity.Tower;
+	import flash.display.Bitmap;
 	
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
@@ -68,6 +69,19 @@ package ManaMason.Structures
 		public override function getCurrentManaCost(): Number
 		{
 			return Math.max(0, GV.ingameCore.currentTowerBuildingManaCost.g());
+		}
+
+		public override function fitGemGhostImage(): void
+		{
+			if (this.gem == null)
+				return;
+				
+			//this.gem.showInTower();
+			this.gemGhost =  new Bitmap(this.gem.bmpNormal.bitmapData);
+			this.gemGhost.scaleX = this.gemGhost.scaleY = 1/2.3;
+			this.gemGhost.x = 8;
+			this.gemGhost.y = 7;
+			super.fitGemGhostImage();
 		}
 
 		public override function isOnPath():Boolean
