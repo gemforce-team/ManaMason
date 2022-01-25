@@ -90,15 +90,10 @@ package ManaMason
 				return;
 			
 			storage = File.applicationStorageDirectory.resolvePath("ManaMason");
-			
 			this.shiftKeyPressed = false;
 			blueprintOptions = new BlueprintOptions();
 			this.fieldWorker = new FieldWorker();
 			initStaticDictionaries();
-			if (gameObjects.GV.ingameCore != null)
-				reloadBlueprintList();
-			else
-				this.blueprints = null;
 			
 			//settings = SettingManager.getManager("ManaMason");
 			//registerDefaultSettings();
@@ -112,6 +107,10 @@ package ManaMason
 			addEventListeners();
 			
 			instance = this;
+			if (GV.ingameCore != null && GV.ingameCore.ingameStatus == IngameStatus.PLAYING)
+				reloadBlueprintList();
+			else
+				this.blueprints = null;
 			
 			ManaMasonMod.logger.log("bind", "ManaMason initialized!");
 		}
