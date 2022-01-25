@@ -38,5 +38,4 @@ package ManaMason
 			return new WallStruct(bpIX, bpIY);
 		}
 	}
-
 }

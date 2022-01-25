@@ -53,6 +53,7 @@ package ManaMason
 			
 			this.blueprintName = "Empty BP";
 			this.structures = new Array();
+			this.blueprintName = "Empty BP";
 			this.gemTemplates = new Object();
 			this.lastOrigin = new Object();
 			this.lastOrigin["xTile"] = 0;
@@ -415,7 +416,7 @@ package ManaMason
 					structure.ghost.x = structure.buildingX;
 					structure.ghost.y = structure.buildingY;
 					structure.ghost.rotation = 0;
-					structure.ghost.gotoAndStop(1);
+					activeWallHelpers.movieClips[activeWallHelpers.occupied].gotoAndStop(1);
 					activeWallHelpers.occupied++;
 				}
 				else

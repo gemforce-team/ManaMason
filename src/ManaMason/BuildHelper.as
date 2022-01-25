@@ -62,6 +62,9 @@ package ManaMason
 		
 		public static function dupeGem(bpo: BlueprintOptions, gem: Gem): Gem
 		{
+			if (gem == null)
+				return null;
+				
 			if (bpo.read(BlueprintOption.SPEND_MANA))
 			{
 				if (GV.ingameCore.getMana() < gem.cost.g())
@@ -92,6 +95,14 @@ package ManaMason
 			GV.ingameCore.stats.spentManaOnSlowingGem += gem.manaValuesByComponent[GemComponentType.SLOWING].g();
 			GV.ingameCore.stats.spentManaOnManaLeechingGem += gem.manaValuesByComponent[GemComponentType.MANA_LEECHING].g();
 			GV.ingameCore.stats.spentManaOnArmorTearingGem += gem.manaValuesByComponent[GemComponentType.ARMOR_TEARING].g();
+		}
+		
+		public static function cleanupOnUnload(): void
+		{
+			for each(var gem: Gem in knownGemTemplates)
+			{
+				(Bitmap)(gem.mc.getChildAt(0)).bitmapData.dispose();
+			}
 		}
 		
 		public static function cleanupOnUnload(): void

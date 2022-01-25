@@ -148,7 +148,7 @@ package ManaMason
 			this.gemGhost.alpha = 0.6;
 			this.ghost.addChildAt(this.gemGhost,0);
 		}
-
+		
 		public function isOnPath(): Boolean
 		{
 			return false;

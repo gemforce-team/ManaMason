@@ -117,5 +117,4 @@ package ManaMason.Utils
 			oMC.tf.scaleX = oMC.tf.scaleY = oMC.plate.scaleX * 2;
 		}
 	}
-
 }

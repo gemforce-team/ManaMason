@@ -74,6 +74,30 @@ package ManaMason
 		private static var blueprintOptions:BlueprintOptions;
 		private var fieldWorker:FieldWorker;
 		
+		internal static var storage:File;
+		public static var structureClasses: Object;
+		
+		private var blueprints:Array;
+		private var selectedBlueprint:Blueprint;
+		private var infoPanelTitle:TextField;
+		private var currentBlueprintIndex:int;
+		
+		private var buildingMode:Boolean;
+		private var shiftKeyPressed:Boolean;
+		
+		private var _lockedInfoPanel: LockedInfoPanel;
+		private function get infoPanel():LockedInfoPanel {
+			if (_lockedInfoPanel == null)
+			{
+				_lockedInfoPanel = new LockedInfoPanel();
+			}
+			return _lockedInfoPanel;
+		}
+		
+		private static var settings: SettingManager;
+		private static var blueprintOptions:BlueprintOptions;
+		private var fieldWorker:FieldWorker;
+		
 		public function ManaMasonMod() 
 		{
 			super();
@@ -189,7 +213,6 @@ package ManaMason
 			{
 				var fileName:String = fileList[f].name;
 				var file:File = fileList[f];
-
 				if (file.extension == "txt")
 				{
 					var blueprint:Blueprint = Blueprint.fromFile(file.nativePath, fileName);
@@ -322,6 +345,148 @@ package ManaMason
 				this.updateBPOrigin();
 				this.redrawRetinaHud();
 			}
+			else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter upgrade mode").matches(pE))
+			{
+				if (this.buildingMode)
+					exitBuildingMode();
+					
+				if (this.fieldWorker.mode == FieldWorkerMode.UPGRADE)
+				{
+					this.fieldWorker.abort();
+					afterWorkerDone();
+				}
+				else
+					enterUpgradeMode();
+				e.eventArgs.continueDefault = false;
+				return;
+			}
+			if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter building mode").matches(pE))
+			{
+				if (this.fieldWorker.busy)
+					this.fieldWorker.abort();
+					
+				if (this.buildingMode)
+				{
+					exitBuildingMode();
+				}
+				else
+				{
+					enterBuildingMode();
+					drawBuildingOverlay(null);
+				}
+				e.eventArgs.continueDefault = !this.buildingMode;
+				return;
+			}
+			else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Reload recipes").matches(pE))
+			{
+				reloadBlueprintList();
+				SB.playSound("sndalert");
+				GV.vfxEngine.createFloatingText4(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"Reloading blueprints!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
+				e.eventArgs.continueDefault = false;
+				return;
+			}
+			
+			if (this.buildingMode)
+			{
+				if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Cycle selected blueprint left").matches(pE))
+				{
+					cycleSelectedBlueprint(-1);
+				}
+				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Cycle selected blueprint right").matches(pE))
+				{
+					cycleSelectedBlueprint(1);
+				}
+				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Flip blueprint vertically").matches(pE))
+				{
+					this.selectedBlueprint.flipVertical();
+					this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+					e.eventArgs.continueDefault = false;
+				}
+				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Flip blueprint horizontally").matches(pE))
+				{
+					this.selectedBlueprint.flipHorizontal();
+					this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+					e.eventArgs.continueDefault = false;
+				}
+				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Rotate blueprint").matches(pE))
+				{
+					this.selectedBlueprint.rotate();
+					this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+					e.eventArgs.continueDefault = false;
+				}
+			}
+		}
+		
+		private function enterCaptureMode(): void
+		{
+			if(GV.ingameCore.actionStatus == ActionStatus.CAST_GEMBOMB_INITIATED)
+			{
+				GV.ingameCore.controller.deselectEverything(true,false);
+			}
+
+			if(!(GV.ingameCore.actionStatus < ActionStatus.DRAGGING_GEM_FROM_TOWER_IDLE || GV.ingameCore.actionStatus >= ActionStatus.CAST_ENHANCEMENT_INITIATED))
+				return;
+				
+			this.fieldWorker.setMode(FieldWorkerMode.CAPTURE, wrapForWorkerOnDone(addBlueprint));
+			GV.main.addChild(this.fieldWorker.crosshair);
+			infoPanel.setup(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH, 30, BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT, 3.087007744E9);
+			this.infoPanelTitle.width = this.infoPanel.width;
+			this.infoPanelTitle.y = 5;
+			this.infoPanelTitle.x = 0;
+			this.infoPanelTitle.text = "Select area to copy. ESC or rightclick to cancel.";
+			infoPanel.addTitle(this.infoPanelTitle);
+			
+			GV.mcInfoPanel.visible = false;
+			showInfoPanel();
+			discardAllMouseInput();
+		}
+		
+		private function enterRefundMode(): void
+		{
+			if(GV.ingameCore.actionStatus == ActionStatus.CAST_GEMBOMB_INITIATED)
+			{
+				GV.ingameCore.controller.deselectEverything(true,false);
+			}
+
+			if(!(GV.ingameCore.actionStatus < ActionStatus.DRAGGING_GEM_FROM_TOWER_IDLE || GV.ingameCore.actionStatus >= ActionStatus.CAST_ENHANCEMENT_INITIATED))
+				return;
+				
+			this.fieldWorker.setMode(FieldWorkerMode.REFUND, afterWorkerDone);
+			GV.main.addChild(this.fieldWorker.crosshair);
+			infoPanel.setup(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH, 30, BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT, 3.087007744E9);
+			this.infoPanelTitle.width = this.infoPanel.width;
+			this.infoPanelTitle.y = 5;
+			this.infoPanelTitle.x = 0;
+			this.infoPanelTitle.text = "Select area to refund all gems within. ESC or rightclick to cancel.";
+			infoPanel.addTitle(this.infoPanelTitle);
+			
+			GV.mcInfoPanel.visible = false;
+			showInfoPanel();
+			discardAllMouseInput();
+		}
+		
+		private function enterUpgradeMode(): void
+		{
+			if(GV.ingameCore.actionStatus == ActionStatus.CAST_GEMBOMB_INITIATED)
+			{
+				GV.ingameCore.controller.deselectEverything(true,false);
+			}
+
+			if(!(GV.ingameCore.actionStatus < ActionStatus.DRAGGING_GEM_FROM_TOWER_IDLE || GV.ingameCore.actionStatus >= ActionStatus.CAST_ENHANCEMENT_INITIATED))
+				return;
+				
+			this.fieldWorker.setMode(FieldWorkerMode.UPGRADE, afterWorkerDone);
+			GV.main.addChild(this.fieldWorker.crosshair);
+			infoPanel.setup(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH, 30, BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT, 3.087007744E9);
+			this.infoPanelTitle.width = this.infoPanel.width;
+			this.infoPanelTitle.y = 5;
+			this.infoPanelTitle.x = 0;
+			this.infoPanelTitle.text = "Select area to upgrade all gems within. ESC or rightclick to cancel.";
+			infoPanel.addTitle(this.infoPanelTitle);
+			
+			GV.mcInfoPanel.visible = false;
+			showInfoPanel();
+			discardAllMouseInput();
 		}
 		
 		private function eh_discardAllMouseInput(e:MouseEvent): void
