@@ -42,7 +42,6 @@ package ManaMason.Structures
 			if (bpo.read(BlueprintOption.SPEND_MANA) && GV.ingameCore.getMana() < this.getCurrentManaCost())
 				return;
 				
-				
 			if (placeable(bpo, true))
 			{
 				GV.ingameCore.creator.buildAmplifier(buildingGridX, buildingGridY);
@@ -98,7 +97,6 @@ package ManaMason.Structures
 		{
 			if (!GV.ingameCore.arrIsSpellBtnVisible[this.spellButtonIndex])
 				return false;
-				
 			if (!bpo.read(BlueprintOption.BUILD_ON_PATH) && isOnPath())
 				return false;
 			if (!fitsOnScene())

@@ -411,7 +411,7 @@ package ManaMason
 					{
 						activeWallHelpers.movieClips.push(new McBuildWallHelper());
 					}
-					structure.ghost = activeWallHelpers.movieClips[activeWallHelpers.occupied];
+					structure.ghost.addChild(activeWallHelpers.movieClips[activeWallHelpers.occupied]);
 					structure.ghost.x = structure.buildingX;
 					structure.ghost.y = structure.buildingY;
 					structure.ghost.rotation = 0;

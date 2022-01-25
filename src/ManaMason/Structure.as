@@ -37,7 +37,7 @@ package ManaMason
 		public var spellButtonIndex:int;
 		
 		public var gemTemplate:FakeGem;
-		public var gem: Gem;
+		public var gem:Gem;
 		public var gemGhost:Bitmap;
 		
 		public function Structure(type:String, bpIX:int, bpIY:int, gem:FakeGem = null) 
@@ -45,7 +45,7 @@ package ManaMason
 			this.type = type;
 			this.blueprintIndexX = bpIX;
 			this.blueprintIndexY = bpIY;
-			setBuildingCoords(50, 8);
+			setBuildingCoords(BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT);
 			this.gemTemplate = gem;
 			this.gem = null;
 			this.ghost = new MovieClip();
@@ -91,12 +91,12 @@ package ManaMason
 		{
 			if (bpo.read(BlueprintOption.CONJURE_GEMS))
 			{
-				var newGem: Gem;
 				if (this.gem != null)
-					newGem = BuildHelper.dupeGem(bpo, this.gem);
-				else
-					newGem = BuildHelper.CreateGemFromTemplate(this.gemTemplate);
-				this.insertGem(newGem);
+				{
+					var newGem: Gem = BuildHelper.dupeGem(bpo, this.gem);
+					if(newGem != null)
+						this.insertGem(newGem);
+				}
 			}
 		}
 		

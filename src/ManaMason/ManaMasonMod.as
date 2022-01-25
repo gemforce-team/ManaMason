@@ -37,7 +37,7 @@ package ManaMason
 	{
 		
 		public function get VERSION():String { return "1.6"; }
-		public function get BEZEL_VERSION():String { return "1.0.1"; }
+		public function get BEZEL_VERSION():String { return "1.1.0"; }
 		public function get MOD_NAME():String { return "ManaMason"; }
 		
 		private var manaMason:Object;
@@ -71,7 +71,7 @@ package ManaMason
 		}
 		
 		private static var settings: SettingManager;
-		private static var blueprintOptions: BlueprintOptions;
+		private static var blueprintOptions:BlueprintOptions;
 		private var fieldWorker:FieldWorker;
 		
 		public function ManaMasonMod() 
@@ -551,9 +551,6 @@ package ManaMason
 				return;
 				
 			if (this.currentBlueprintIndex == -1)
-				this.reloadBlueprintList();
-				
-			if (this.currentBlueprintIndex == -1)
 			{
 				SB.playSound("sndalert");
 				GV.vfxEngine.createFloatingText(GV.main.mouseX,GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20),"No blueprints in the blueprints folder!",16768392,12,"center",Math.random() * 3 - 1.5,-4 - Math.random() * 3,0,0.55,12,0,1000);
@@ -625,7 +622,6 @@ package ManaMason
 		
 		private function restoreAllMouseInput(): void
 		{
-			
 			GV.main.stage.removeEventListener(MouseEvent.CLICK, eh_discardAllMouseInput, true);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, eh_discardAllMouseInput, true);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_UP, eh_discardAllMouseInput, true);

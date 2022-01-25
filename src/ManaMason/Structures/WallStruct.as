@@ -75,6 +75,8 @@ package ManaMason.Structures
 
 		public override function placeable(bpo: BlueprintOptions, isFinalCalculation:Boolean = false):Boolean
 		{
+			if (!GV.ingameCore.arrIsSpellBtnVisible[this.spellButtonIndex])
+				return false;
 			if (!bpo.read(BlueprintOption.BUILD_ON_PATH) && isOnPath())
 				return false;
 			if (!fitsOnScene())
