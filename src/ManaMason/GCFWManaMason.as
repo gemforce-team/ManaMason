@@ -9,6 +9,8 @@ package ManaMason
 	import Bezel.Utils.Keybind;
 	import Bezel.Utils.SettingManager;
 	import ManaMason.Utils.BlueprintOption;
+	import ManaMason.Utils.FieldWorker;
+	import ManaMason.Utils.FieldWorkerMode;
 	import ManaMason.Utils.LockedInfoPanel;
 	import com.giab.common.abstract.SpriteExt;
 	import com.giab.games.gcfw.constants.ActionStatus;
@@ -49,20 +51,11 @@ package ManaMason
 		private var mouseMoveBPUpdateHandler:Function;
 		
 		private var buildingMode:Boolean;
-		private var selectionMode:Boolean;
-		private var selectedCorners: Object;
 		private var shiftKeyPressed:Boolean;
 		
 		private var _crosshair:Shape;
 		private var _lockedInfoPanel: LockedInfoPanel;
 		private var _baseInfoPanel: McInfoPanel;
-		private function get crosshair():Shape {
-			if (_crosshair == null)
-			{
-				_crosshair = new Shape;
-			}
-			return _crosshair;
-		}
 		private function get infoPanel():LockedInfoPanel {
 			if (_lockedInfoPanel == null)
 			{
@@ -72,7 +65,8 @@ package ManaMason
 		}
 		
 		private static var settings: SettingManager;
-		private static var blueprintOptions: BlueprintOptions;
+		private static var blueprintOptions:BlueprintOptions;
+		private var fieldWorker:FieldWorker;
 		
 		public function GCFWManaMason() 
 		{
@@ -80,13 +74,10 @@ package ManaMason
 			
 			storage = File.applicationStorageDirectory.resolvePath("ManaMason");
 			
-			this.blueprints = new Array();
+			this.blueprints = null;
 			this.shiftKeyPressed = false;
-			this.selectionMode = false;
-			this.selectedCorners = new Object();
 			blueprintOptions = new BlueprintOptions();
-			selectedCorners[0] = null;
-			selectedCorners[1] = null;
+			this.fieldWorker = new FieldWorker();
 			
 			structureClasses = new Object();
 			structureClasses['w'] = Wall;
@@ -104,10 +95,6 @@ package ManaMason
 			prepareFolders();
 			
 			initInfoPanelTitle();
-			
-			reloadBlueprintList();
-			
-			this.currentBlueprintIndex = -1;
 			
 			var self: GCFWManaMason = this;
 			this.mouseMoveBPUpdateHandler = function(e: MouseEvent):void {
@@ -151,7 +138,9 @@ package ManaMason
 		{
 			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Cycle selected blueprint left", new Keybind("page_up"));
 			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Enter building mode", new Keybind("ctrl+v"));
-			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Enter capture mode", new Keybind("ctrl+c"));
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Enter copy mode", new Keybind("ctrl+c"));
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Enter refund mode", new Keybind("ctrl+x"));
+			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Enter upgrade mode", new Keybind("ctrl+u"));
 			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Cycle selected blueprint right", new Keybind("page_down"));
 			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Reload recipes", new Keybind("ctrl+r"));
 			ManaMasonMod.bezel.keybindManager.registerHotkey("ManaMason: Flip blueprint horizontally", new Keybind("f"));
@@ -164,8 +153,8 @@ package ManaMason
 		{
 			if(this.buildingMode)
 				exitBuildingMode();
-			if (this.selectionMode)
-				exitSelectionMode();
+			if (this.fieldWorker.busy)
+				this.fieldWorker.abort();
 				
 			cleanupAllBlueprints();
 				
@@ -197,6 +186,12 @@ package ManaMason
 			this.blueprints = newBlueprints;
 			
 			selectBlueprintAt(0);
+		}
+		
+		private function firstBlueprintLoad(e: Event): void
+		{
+			if (this.blueprints == null)
+				reloadBlueprintList();
 		}
 		
 		public function cycleSelectedBlueprint(increment:int): void
@@ -274,16 +269,30 @@ package ManaMason
 		private function addEventListeners(): void
 		{
 			ManaMasonMod.bezel.addEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
+			ManaMasonMod.bezel.addEventListener("ingameNewScene", firstBlueprintLoad);
 			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
 			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true, 10);
 			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
-			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.ENTER_FRAME, drawSelectionOverlay);
+			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.ENTER_FRAME, this.fieldWorker.frameUpdate);
 			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
 			//ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
 			this.infoPanel.addEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
 		}
 		
-		private function eh_discardAllMouseInput(e:MouseEvent):void
+		private function removeEventListeners(): void
+		{
+			ManaMasonMod.bezel.removeEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
+			ManaMasonMod.bezel.removeEventListener("ingameNewScene", firstBlueprintLoad);
+			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
+			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
+			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
+			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.ENTER_FRAME, this.fieldWorker.frameUpdate);
+			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
+			//ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
+			this.infoPanel.removeEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
+		}
+		
+		private function eh_discardAllMouseInput(e:MouseEvent): void
 		{
 			e.stopImmediatePropagation();
 		}
@@ -310,18 +319,6 @@ package ManaMason
 				bp.cleanup();
 		}
 		
-		private function removeEventListeners(): void
-		{
-			ManaMasonMod.bezel.removeEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
-			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
-			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
-			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
-			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(Event.ENTER_FRAME, drawSelectionOverlay);
-			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
-			//ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
-			this.infoPanel.removeEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
-		}
-		
 		public function eh_interceptKeyboardEvent(e:Object): void
 		{
 			var pE:KeyboardEvent = e.eventArgs.event;
@@ -330,30 +327,62 @@ package ManaMason
 			{
 				if (this.buildingMode)
 					exitBuildingMode();
-				if (this.selectionMode)
-					exitSelectionMode();
+				if (this.fieldWorker.busy)
+				{
+					this.fieldWorker.abort();
+					afterWorkerDone();
+				}
 			}
 			
-			if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter capture mode").matches(pE))
+			if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter copy mode").matches(pE))
 			{
 				if (this.buildingMode)
 					exitBuildingMode();
 					
-				if (this.selectionMode)
+				if (this.fieldWorker.mode == FieldWorkerMode.CAPTURE)
 				{
-					exitSelectionMode();
+					this.fieldWorker.abort();
+					afterWorkerDone();
 				}
 				else
-				{
 					enterCaptureMode();
-				}
 				e.eventArgs.continueDefault = false;
 				return;
 			}
-			else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter building mode").matches(pE))
+			else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter refund mode").matches(pE))
 			{
-				if (this.selectionMode)
-					exitSelectionMode();
+				if (this.buildingMode)
+					exitBuildingMode();
+					
+				if (this.fieldWorker.mode == FieldWorkerMode.REFUND)
+				{
+					this.fieldWorker.abort();
+					afterWorkerDone();
+				}
+				else
+					enterRefundMode();
+				e.eventArgs.continueDefault = false;
+				return;
+			}
+			else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter upgrade mode").matches(pE))
+			{
+				if (this.buildingMode)
+					exitBuildingMode();
+					
+				if (this.fieldWorker.mode == FieldWorkerMode.UPGRADE)
+				{
+					this.fieldWorker.abort();
+					afterWorkerDone();
+				}
+				else
+					enterUpgradeMode();
+				e.eventArgs.continueDefault = false;
+				return;
+			}
+			if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Enter building mode").matches(pE))
+			{
+				if (this.fieldWorker.busy)
+					this.fieldWorker.abort();
 					
 				if (this.buildingMode)
 				{
@@ -417,18 +446,66 @@ package ManaMason
 			if(!(GV.ingameCore.actionStatus < ActionStatus.DRAGGING_GEM_FROM_TOWER_IDLE || GV.ingameCore.actionStatus >= ActionStatus.CAST_ENHANCEMENT_INITIATED))
 				return;
 				
-			GV.ingameCore.cnt.cntRetinaHud.addChild(crosshair);
+			this.fieldWorker.setMode(FieldWorkerMode.CAPTURE, wrapForWorkerOnDone(addBlueprint));
+			GV.main.addChild(this.fieldWorker.crosshair);
 			infoPanel.setup(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH, 30, BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT, 3.087007744E9);
 			this.infoPanelTitle.width = this.infoPanel.width;
 			this.infoPanelTitle.y = 5;
 			this.infoPanelTitle.x = 0;
+			this.infoPanelTitle.text = "Select area to copy. ESC or rightclick to cancel.";
 			infoPanel.addTitle(this.infoPanelTitle);
 			
-			this.selectionMode = true;
 			GV.mcInfoPanel.visible = false;
 			showInfoPanel();
 			discardAllMouseInput();
-			drawSelectionOverlay(null);
+		}
+		
+		private function enterRefundMode(): void
+		{
+			if(GV.ingameCore.actionStatus == ActionStatus.CAST_GEMBOMB_INITIATED)
+			{
+				GV.ingameCore.controller.deselectEverything(true,false);
+			}
+
+			if(!(GV.ingameCore.actionStatus < ActionStatus.DRAGGING_GEM_FROM_TOWER_IDLE || GV.ingameCore.actionStatus >= ActionStatus.CAST_ENHANCEMENT_INITIATED))
+				return;
+				
+			this.fieldWorker.setMode(FieldWorkerMode.REFUND, afterWorkerDone);
+			GV.main.addChild(this.fieldWorker.crosshair);
+			infoPanel.setup(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH, 30, BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT, 3.087007744E9);
+			this.infoPanelTitle.width = this.infoPanel.width;
+			this.infoPanelTitle.y = 5;
+			this.infoPanelTitle.x = 0;
+			this.infoPanelTitle.text = "Select area to refund all gems within. ESC or rightclick to cancel.";
+			infoPanel.addTitle(this.infoPanelTitle);
+			
+			GV.mcInfoPanel.visible = false;
+			showInfoPanel();
+			discardAllMouseInput();
+		}
+		
+		private function enterUpgradeMode(): void
+		{
+			if(GV.ingameCore.actionStatus == ActionStatus.CAST_GEMBOMB_INITIATED)
+			{
+				GV.ingameCore.controller.deselectEverything(true,false);
+			}
+
+			if(!(GV.ingameCore.actionStatus < ActionStatus.DRAGGING_GEM_FROM_TOWER_IDLE || GV.ingameCore.actionStatus >= ActionStatus.CAST_ENHANCEMENT_INITIATED))
+				return;
+				
+			this.fieldWorker.setMode(FieldWorkerMode.UPGRADE, afterWorkerDone);
+			GV.main.addChild(this.fieldWorker.crosshair);
+			infoPanel.setup(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH, 30, BuildHelper.WAVESTONE_WIDTH, BuildHelper.TOP_UI_HEIGHT, 3.087007744E9);
+			this.infoPanelTitle.width = this.infoPanel.width;
+			this.infoPanelTitle.y = 5;
+			this.infoPanelTitle.x = 0;
+			this.infoPanelTitle.text = "Select area to upgrade all gems within. ESC or rightclick to cancel.";
+			infoPanel.addTitle(this.infoPanelTitle);
+			
+			GV.mcInfoPanel.visible = false;
+			showInfoPanel();
+			discardAllMouseInput();
 		}
 		
 		private function enterBuildingMode(): void
@@ -471,6 +548,19 @@ package ManaMason
 			}
 		}
 		
+		private function exitBuildingMode(): void
+		{
+			var rHUD:Object = GV.ingameCore.cnt.cntRetinaHud;
+			rHUD.removeChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
+			rHUD.removeChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
+			hideInfoPanel();
+			restoreAllMouseInput();
+			//changeRightSideUIVisibility(true);
+			GV.mcInfoPanel.visible = true;
+			GV.main.cntScreens.cntIngame.removeChild(this.selectedBlueprint);
+			this.buildingMode = false;
+		}
+		
 		private function changeRightSideUIVisibility(shouldShow: Boolean): void
 		{
 			var frame: McIngameFrame = GV.main.cntScreens.cntIngame.mcIngameFrame;
@@ -500,7 +590,6 @@ package ManaMason
 		
 		private function restoreAllMouseInput(): void
 		{
-			
 			GV.main.stage.removeEventListener(MouseEvent.CLICK, eh_discardAllMouseInput, true);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, eh_discardAllMouseInput, true);
 			GV.main.stage.removeEventListener(MouseEvent.MOUSE_UP, eh_discardAllMouseInput, true);
@@ -539,63 +628,31 @@ package ManaMason
 			{
 				this.selectedBlueprint.castBuild(blueprintOptions);
 			}
-			else if (this.selectionMode)
+			else if (this.fieldWorker.busy)
 			{
-					
-				var vX:Number = Math.floor((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE);
-				var vY:Number = Math.floor((mouseY - BuildHelper.TOP_UI_HEIGHT) / BuildHelper.TILE_SIZE);
-				
-				if (this.selectedCorners[0] == null)
-				{
-					this.selectedCorners[0] = [vX, vY];
-					drawSelectionOverlay(mE);
-				}
-				else if (this.selectedCorners[1] == null)
-				{
-					var cx: Number = this.selectedCorners[0][0];
-					var cy: Number = this.selectedCorners[0][1];
-					if (vX -cx <= 0 && vY - cy <= 0)
-					{
-						this.selectedCorners[0] = [vX, vY];
-						this.selectedCorners[1] = [cx, cy];
-					}
-					else if(vX -cx >= 0 && vY - cy >= 0)
-					{
-						this.selectedCorners[1] = [vX, vY];
-						this.selectedCorners[0] = [cx, cy];
-					}
-					else
-					{
-						cx = vX;
-						vX = this.selectedCorners[0][0];
-						if (vX -cx <= 0 && vY - cy <= 0)
-						{
-							this.selectedCorners[0] = [vX, vY];
-							this.selectedCorners[1] = [cx, cy];
-						}
-						else if(vX -cx >= 0 && vY - cy >= 0)
-						{
-							this.selectedCorners[1] = [vX, vY];
-							this.selectedCorners[0] = [cx, cy];
-						}
-						else
-						{
-							exitSelectionMode();
-							return;
-						}
-					}
-					
-					var capturedBP: Blueprint = Blueprint.tryCaptureFromField(this.selectedCorners).setBlueprintOptions(blueprintOptions);
-					blueprints.unshift(capturedBP);
-					currentBlueprintIndex = 0;
-					selectedBlueprint = blueprints[currentBlueprintIndex];
-					exitSelectionMode();
-				}
+				this.fieldWorker.fieldClicked(mouseX, mouseY);
 			}
 			else
 				return;
 				
 			mE.stopImmediatePropagation();
+		}
+		
+		private function addBlueprint(bp:Blueprint): void
+		{
+			var capturedBP:Blueprint = bp.setBlueprintOptions(blueprintOptions);
+			this.blueprints.unshift(capturedBP);
+			this.currentBlueprintIndex = 0;
+			this.selectedBlueprint = this.blueprints[currentBlueprintIndex];
+		}
+		
+		private function wrapForWorkerOnDone(callback:Function):Function
+		{
+			var self:GCFWManaMason = this;
+			return function(...args):void {
+				callback(args[0]);
+				self.afterWorkerDone();
+			}
 		}
 		
 		public function rightClickOnScene(mE:MouseEvent): void
@@ -605,25 +662,23 @@ package ManaMason
 				exitBuildingMode();
 			}
 			
-			if (this.selectionMode)
+			if (this.fieldWorker.busy)
 			{
-				exitSelectionMode();
+				this.fieldWorker.abort();
+				afterWorkerDone();
 			}
 		}
 		
-		private function exitSelectionMode(): void
+		public function afterWorkerDone(): void
 		{
-			this.selectedCorners[0] = null;
-			this.selectedCorners[1] = null;
-			this.selectionMode = false;
+			GV.main.removeChild(this.fieldWorker.crosshair);
 			hideInfoPanel();
+			restoreAllMouseInput();
 			GV.mcInfoPanel.visible = true;
 			restoreAllMouseInput();
-			crosshair.graphics.clear();
-			GV.ingameCore.cnt.cntRetinaHud.addChild(crosshair);
 		}
 		
-		private function drawBuildingOverlay(e: Event): void
+		private function drawBuildingOverlay(e:Event): void
 		{
 			if (!this.buildingMode)
 				return;
@@ -647,58 +702,6 @@ package ManaMason
 		{
 			if(this.buildingMode && this.currentBlueprintIndex != -1)
 				this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY);
-		}
-		
-		private function drawSelectionOverlay(e: Event): void
-		{
-			if (!this.selectionMode)
-				return;
-				
-			var mX: Number = GV.main.cntScreens.cntIngame.root.mouseX;
-			var mY: Number = GV.main.cntScreens.cntIngame.root.mouseY;
-			
-			var text: String = "";
-			
-			if (mX > BuildHelper.WAVESTONE_WIDTH &&
-				mX < BuildHelper.WAVESTONE_WIDTH + BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH &&
-				mY > BuildHelper.TOP_UI_HEIGHT &&
-				mY < BuildHelper.TOP_UI_HEIGHT + BuildHelper.TILE_SIZE*BuildHelper.FIELD_HEIGHT)
-			{
-				var rHUD: SpriteExt = GV.ingameCore.cnt.cntRetinaHud;
-				/*if(rHUD.getChildIndex(crosshair) >=0 )
-					rHUD.removeChild(crosshair);*/
-				crosshair.graphics.clear();
-				crosshair.graphics.lineStyle(2, 0x00FF00, 1);
-				if (this.selectedCorners[0] == null) {
-					this.infoPanelTitle.text = "Please click one corner of your selection.";
-					crosshair.graphics.moveTo(BuildHelper.WAVESTONE_WIDTH, mY);
-					crosshair.graphics.lineTo(BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH+BuildHelper.WAVESTONE_WIDTH, mY);
-					crosshair.graphics.moveTo(mX, BuildHelper.TOP_UI_HEIGHT);
-					crosshair.graphics.lineTo(mX, BuildHelper.TILE_SIZE * BuildHelper.FIELD_HEIGHT+BuildHelper.TOP_UI_HEIGHT);
-				}
-				else if (this.selectedCorners[1] == null)
-				{
-					this.infoPanelTitle.text = "Please click the opposite corner of your selection.";
-					crosshair.graphics.moveTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][0]), BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][1]));
-					crosshair.graphics.lineTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][0]), mY);
-					crosshair.graphics.lineTo(mX, mY);
-					crosshair.graphics.lineTo(mX, BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][1]));
-					crosshair.graphics.lineTo(BuildHelper.WAVESTONE_WIDTH + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][0]), BuildHelper.TOP_UI_HEIGHT + 8 + BuildHelper.TILE_SIZE * (this.selectedCorners[0][1]));
-				}
-			}
-		}
-		
-		private function exitBuildingMode(): void
-		{
-			var rHUD:Object = GV.ingameCore.cnt.cntRetinaHud;
-			rHUD.removeChild(GV.ingameCore.cnt.bmpNoPlaceBeaconAvailMap);
-			rHUD.removeChild(GV.ingameCore.cnt.bmpWallPlaceAvailMap);
-			hideInfoPanel();
-			restoreAllMouseInput();
-			//changeRightSideUIVisibility(true);
-			GV.mcInfoPanel.visible = true;
-			GV.main.cntScreens.cntIngame.removeChild(this.selectedBlueprint);
-			this.buildingMode = false;
 		}
 		
 		private function showInfoPanel(): void
