@@ -189,8 +189,8 @@ package ManaMason.Utils
 			{
 				if (GV.ingameCore.getMana() >= (struct.insertedGem.cost.g() + GV.ingameCore.gemCombiningManaCost.g()))
 				{
-					GV.ingameCore.spellCaster.castCombineGemsFromBuildingToBuilding(struct, struct);
 					GV.ingameCore.changeMana( -struct.insertedGem.cost.g(), false, true);
+					GV.ingameCore.spellCaster.castCombineGemsFromBuildingToBuilding(struct, struct);
 				}
 			}
 		}
