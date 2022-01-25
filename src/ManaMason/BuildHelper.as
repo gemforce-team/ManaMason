@@ -56,7 +56,7 @@ package ManaMason
 			
 			knownGemTemplates[spec] = gem;
 			GV.gemBitmapCreator.giveGemBitmaps(gem, false);
-			GV.ingameCore.cnt.cntGemsInInventory.removeChild(gem.mc)
+			GV.ingameCore.cnt.cntGemsInInventory.removeChild(gem.mc);
 			return gem;
 		}
 		

@@ -681,7 +681,7 @@ package ManaMason
 		
 		private function wrapForWorkerOnDone(callback:Function):Function
 		{
-			var self:ManaMasonMod = this;
+			var self:ManaMasonMod = this;
 			return function(...args):void {
 				callback(args[0]);
 				self.afterWorkerDone();

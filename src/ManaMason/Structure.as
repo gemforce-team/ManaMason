@@ -30,8 +30,8 @@ package ManaMason
 		public var rendered:Boolean;
 		public var size:int;
 		
-		public var xOffset:int;
-		public var yOffset:int;
+		protected var xOffset:int;
+		protected var yOffset:int;
 		
 		public var buildingType:String;
 		public var spellButtonIndex:int;

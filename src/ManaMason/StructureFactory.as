@@ -43,7 +43,7 @@ package ManaMason
 					break;
 				default:
 			}
-			return new ManaMason.Structures.WallStruct(bpIX, bpIY);
+			return new WallStruct(bpIX, bpIY);
 		}
 	}
 }
