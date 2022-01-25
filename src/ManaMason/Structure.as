@@ -4,6 +4,7 @@ package ManaMason
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.audio.snd.Sndlevelhiddentoavailable;
 	import com.giab.games.gcfw.entity.Gem;
+	import flash.display.Bitmap;
 	import flash.display.MovieClip;
 	/**
 	 * ...
@@ -36,7 +37,8 @@ package ManaMason
 		public var spellButtonIndex:int;
 		
 		public var gemTemplate:FakeGem;
-		public var gem: Gem;
+		public var gem:Gem;
+		public var gemGhost:Bitmap;
 		
 		public function Structure(type:String, bpIX:int, bpIY:int, gem:FakeGem = null) 
 		{
@@ -89,18 +91,39 @@ package ManaMason
 		{
 			if (bpo.read(BlueprintOption.CONJURE_GEMS))
 			{
-				var newGem: Gem;
 				if (this.gem != null)
-					newGem = BuildHelper.dupeGem(bpo, this.gem);
-				else
-					newGem = BuildHelper.CreateGemFromTemplate(this.gemTemplate, bpo);
-				this.insertGem(newGem);
+				{
+					var newGem: Gem = BuildHelper.dupeGem(bpo, this.gem);
+					if(newGem != null)
+						this.insertGem(newGem);
+				}
 			}
 		}
 		
 		public function toString(): String
 		{
 			return this.type + "(" + this.blueprintIndexX + ";" + this.blueprintIndexY + ") at " + this.buildingX + ";" + this.buildingY;
+		}
+		
+		public function exportGemSpecToString(): String
+		{
+			if (this.gem == null)
+				return null;
+				
+			var res:String = "";
+			var maxComponent:Object = {"type": -1, "value": -1};
+			for (var i:String in this.gem.manaValuesByComponent)
+			{
+				var component:Number = this.gem.manaValuesByComponent[i].g();
+				if (component != 0 && component > maxComponent.value)
+				{
+					maxComponent.type = (Number)(i);
+					maxComponent.value = component;
+				}
+			}
+			res += [ManaMasonMod.gemTypeToName[maxComponent.type], gem.grade.g().toString(), gem.targetPriority.toString(), gem.rangeRatio.g().toString()].join(",");
+			
+			return res;
 		}
 		
 		public function incrementManaCost(): void
@@ -120,6 +143,12 @@ package ManaMason
 			GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX].insertGem(gem);
 		}
 
+		public function fitGemGhostImage(): void
+		{
+			this.gemGhost.alpha = 0.6;
+			this.ghost.addChildAt(this.gemGhost,0);
+		}
+		
 		public function isOnPath(): Boolean
 		{
 			return false;

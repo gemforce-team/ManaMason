@@ -6,10 +6,12 @@ package ManaMason.Structures
 	 */
 	
 	import ManaMason.BlueprintOptions;
+	import ManaMason.BuildHelper;
 	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gcfw.constants.BuildingType;
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.entity.Trap;
+	import flash.display.Bitmap;
 	
 	import ManaMason.GCFWManaMason;
 	import ManaMason.FakeGem;
@@ -69,6 +71,19 @@ package ManaMason.Structures
 		public override function getCurrentManaCost(): Number
 		{
 			return Math.max(0, GV.ingameCore.currentTrapBuildingManaCost.g());
+		}
+
+		public override function fitGemGhostImage(): void
+		{
+			if (this.gem == null)
+				return;
+				
+			//this.gem.showInTower();
+			this.gemGhost =  new Bitmap(this.gem.bmpInTower.bitmapData);
+			this.gemGhost.scaleX = this.gemGhost.scaleY = 1/3;
+			this.gemGhost.x = 6;
+			this.gemGhost.y = 5;
+			super.fitGemGhostImage();
 		}
 
 		public override function isOnPath():Boolean

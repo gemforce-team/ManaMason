@@ -1,6 +1,5 @@
 package ManaMason 
 {
-	import ManaMason.Structures.AirStruct;
 	import ManaMason.Structures.AmplifierStruct;
 	import ManaMason.Structures.LanternStruct;
 	import ManaMason.Structures.PylonStruct;
@@ -22,9 +21,6 @@ package ManaMason
 		{
 			switch (type) 
 			{
-				case "-":
-					return new AirStruct(bpIX, bpIY);
-					break;
 				case "w":
 					return new WallStruct(bpIX, bpIY);
 					break;
@@ -45,8 +41,7 @@ package ManaMason
 					break;
 				default:
 			}
-			return new AirStruct(bpIX, bpIY);
+			return new ManaMason.Structures.WallStruct(bpIX, bpIY);
 		}
 	}
-
 }

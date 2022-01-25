@@ -22,6 +22,8 @@ package ManaMason
 		internal static var bezel:Bezel;
 		internal static var logger:Logger;
 		internal static var instance:ManaMasonMod;
+		
+		public static var gemTypeToName: Array;
 
 		public static const GCFW_VERSION:String = "1.2.1a";
 		
@@ -39,6 +41,13 @@ package ManaMason
 			if (bezel.mainLoader is GCFWBezel)
 			{
 				manaMason = new GCFWManaMason();
+				gemTypeToName = new Array();
+				gemTypeToName[0] = "yellow";
+				gemTypeToName[1] = "orange";
+				gemTypeToName[2] = "red";
+				gemTypeToName[3] = "purple";
+				gemTypeToName[4] = "green";
+				gemTypeToName[5] = "slowing";
 			}
 		}
 		

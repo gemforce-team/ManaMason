@@ -6,10 +6,12 @@ package ManaMason.Structures
 	 */
 	
 	import ManaMason.BlueprintOptions;
+	import ManaMason.BuildHelper;
 	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gcfw.constants.BuildingType;
 	import com.giab.games.gcfw.GV;
 	import com.giab.games.gcfw.entity.Amplifier;
+	import flash.display.Bitmap;
 	
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
@@ -68,6 +70,19 @@ package ManaMason.Structures
 		public override function getCurrentManaCost(): Number
 		{
 			return Math.max(0, GV.ingameCore.currentAmplifierBuildingManaCost.g());
+		}
+
+		public override function fitGemGhostImage(): void
+		{
+			if (this.gem == null)
+				return;
+				
+			//this.gem.showInAmp();
+			this.gemGhost =  new Bitmap(this.gem.bmpInTower.bitmapData);
+			this.gemGhost.scaleX = this.gemGhost.scaleY = 1/3;
+			this.gemGhost.x = 13;
+			this.gemGhost.y = 14;
+			super.fitGemGhostImage();
 		}
 
 		public override function isOnPath():Boolean
