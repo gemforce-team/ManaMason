@@ -6,12 +6,11 @@ package ManaMason
 	 */
 	
 	import ManaMason.Utils.BlueprintOption;
+	import com.giab.games.gccs.steam.GV;
 	import com.giab.games.gccs.steam.constants.GemComponentType;
 	import com.giab.games.gccs.steam.constants.GemEnhancementId;
 	import com.giab.games.gccs.steam.entity.Gem;
-	import com.giab.games.gccs.steam.GV;
 	import flash.display.Bitmap;
-	
 	import flash.errors.IllegalOperationError;
 	
 	public class BuildHelper 

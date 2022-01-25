@@ -6,14 +6,13 @@ package ManaMason.Structures
 	 */
 	
 	import ManaMason.BlueprintOptions;
-	import ManaMason.Utils.BlueprintOption;
-	import com.giab.games.gccs.steam.constants.BuildingType;
-	import com.giab.games.gccs.steam.GV;
-	import com.giab.games.gccs.steam.entity.Amplifier;
-	import flash.display.Bitmap;
-	
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
+	import ManaMason.Utils.BlueprintOption;
+	import com.giab.games.gccs.steam.GV;
+	import com.giab.games.gccs.steam.constants.BuildingType;
+	import com.giab.games.gccs.steam.entity.Amplifier;
+	import flash.display.Bitmap;
 	
 	public class AmplifierStruct extends Structure
 	{
@@ -80,7 +79,7 @@ package ManaMason.Structures
 			//this.gem.showInAmp();
 			this.gemGhost =  new Bitmap(this.gem.bmpNormal.bitmapData);
 			this.gemGhost.scaleX = this.gemGhost.scaleY = 1/2.3;
-			this.gemGhost.x = 8;
+			this.gemGhost.x = 7;
 			this.gemGhost.y = 8;
 			super.fitGemGhostImage();
 		}

@@ -4,6 +4,7 @@ package ManaMason.Utils
 	 * ...
 	 * @author Hellrage
 	 */
+	
 	public class BlueprintOption 
 	{
 		public static const PLACE_WALLS: String = "Place Walls";

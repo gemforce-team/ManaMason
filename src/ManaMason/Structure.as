@@ -1,14 +1,15 @@
 package ManaMason 
 {
+	/**
+	 * ...
+	 * @author Hellrage
+	 */
+	
 	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gccs.steam.GV;
 	import com.giab.games.gccs.steam.entity.Gem;
 	import flash.display.Bitmap;
 	import flash.display.MovieClip;
-	/**
-	 * ...
-	 * @author Hellrage
-	 */
 	
 	public class Structure 
 	{

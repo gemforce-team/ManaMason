@@ -6,15 +6,13 @@ package ManaMason.Structures
 	 */
 	
 	import ManaMason.BlueprintOptions;
-	import ManaMason.Utils.BlueprintOption;
-	import com.giab.games.gccs.steam.constants.BuildingType;
-	import com.giab.games.gccs.steam.GV;
-	import com.giab.games.gccs.steam.entity.Trap;
-	import flash.display.Bitmap;
-	
-	import ManaMason.GCCSManaMason;
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
+	import ManaMason.Utils.BlueprintOption;
+	import com.giab.games.gccs.steam.GV;
+	import com.giab.games.gccs.steam.constants.BuildingType;
+	import com.giab.games.gccs.steam.entity.Trap;
+	import flash.display.Bitmap;
 	
 	public class TrapStruct extends Structure
 	{

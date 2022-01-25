@@ -1,13 +1,15 @@
 package ManaMason 
 {
-	import ManaMason.Structures.AmplifierStruct;
-	import ManaMason.Structures.TowerStruct;
-	import ManaMason.Structures.TrapStruct;
-	import ManaMason.Structures.WallStruct;
 	/**
 	 * ...
 	 * @author Hellrage
 	 */
+	
+	import ManaMason.Structures.AmplifierStruct;
+	import ManaMason.Structures.TowerStruct;
+	import ManaMason.Structures.TrapStruct;
+	import ManaMason.Structures.WallStruct;
+	
 	public class StructureFactory 
 	{
 		

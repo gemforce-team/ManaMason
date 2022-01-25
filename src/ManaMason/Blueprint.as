@@ -4,17 +4,17 @@ package ManaMason
 	 * ...
 	 * @author Hellrage
 	 */
+	
+	import ManaMason.BlueprintOptions;
+	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gccs.steam.GV;
 	import com.giab.games.gccs.steam.entity.Gem;
 	import com.giab.games.gccs.steam.entity.Orblet;
 	import com.giab.games.gccs.steam.mcDyn.McBuildWallHelper;
 	import flash.display.Bitmap;
 	import flash.display.MovieClip;
-	import flash.geom.ColorTransform;
-	
-	import ManaMason.BlueprintOptions;
-	import ManaMason.Utils.BlueprintOption;
 	import flash.filesystem.*;
+	import flash.geom.ColorTransform;
 	
 	public class Blueprint extends MovieClip
 	{
@@ -504,9 +504,9 @@ package ManaMason
 				for (var j:int = captureCorners[0][0]; j <= captureCorners[1][0]; j++) 
 				{
 					tileProcessed = false;
-					for (var type:String in GCCSManaMason.structureClasses)
+					for (var type:String in ManaMasonMod.structureClasses)
 					{
-						if (grid[i][j] is GCCSManaMason.structureClasses[type] && regGrid[i][j] == grid[i][j])
+						if (grid[i][j] is ManaMasonMod.structureClasses[type] && regGrid[i][j] == grid[i][j])
 						{
 							var struct: Structure = StructureFactory.CreateStructure(type, j - captureCorners[0][0], i - captureCorners[0][1]);
 							if (grid[i][j].hasOwnProperty("insertedGem") && grid[i][j].insertedGem != null)
@@ -532,7 +532,7 @@ package ManaMason
 		
 		private static function exportBlueprintFile(bp: Blueprint): void
 		{
-			var blueprintsFolder:File = GCCSManaMason.storage.resolvePath("blueprints");
+			var blueprintsFolder:File = ManaMasonMod.storage.resolvePath("blueprints");
 			var bpFile:File = blueprintsFolder.resolvePath("Exported BP.txt");
 			var bpWriter:FileStream = new FileStream();
 			try
