@@ -4,6 +4,7 @@ package ManaMason
 	 * ...
 	 * @author Hellrage
 	 */
+	
 	public class FakeGem 
 	{
 		public var specification:String;

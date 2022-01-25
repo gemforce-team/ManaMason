@@ -6,13 +6,11 @@ package ManaMason.Structures
 	 */
 	
 	import ManaMason.BlueprintOptions;
-	import ManaMason.Utils.BlueprintOption;
-	import com.giab.games.gcfw.constants.BuildingType;
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.entity.Wall;
-	 
-	import ManaMason.GCFWManaMason;
 	import ManaMason.Structure;
+	import ManaMason.Utils.BlueprintOption;
+	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.constants.BuildingType;
+	import com.giab.games.gcfw.entity.Wall;
 	
 	public class WallStruct extends Structure
 	{

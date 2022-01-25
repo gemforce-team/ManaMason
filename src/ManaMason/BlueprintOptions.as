@@ -6,7 +6,7 @@ package ManaMason
 	 */
 	
 	import ManaMason.Utils.BlueprintOption;
-	import flash.utils.Dictionary;
+	
 	public class BlueprintOptions 
 	{
 		private static var DEFAULT_OPTIONS:Vector.<BlueprintOption> = new <BlueprintOption>[

@@ -1,10 +1,12 @@
 package ManaMason.Utils 
 {
-	import flash.errors.IllegalOperationError;
 	/**
 	 * ...
 	 * @author Hellrage
 	 */
+	
+	import flash.errors.IllegalOperationError;
+	
 	public class FieldWorkerMode 
 	{
 		public static const NONE:int = 0;

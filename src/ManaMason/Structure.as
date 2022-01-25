@@ -1,15 +1,15 @@
 package ManaMason 
 {
-	import ManaMason.Utils.BlueprintOption;
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.audio.snd.Sndlevelhiddentoavailable;
-	import com.giab.games.gcfw.entity.Gem;
-	import flash.display.Bitmap;
-	import flash.display.MovieClip;
 	/**
 	 * ...
 	 * @author Hellrage
 	 */
+	
+	import ManaMason.Utils.BlueprintOption;
+	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.entity.Gem;
+	import flash.display.Bitmap;
+	import flash.display.MovieClip;
 	
 	public class Structure 
 	{

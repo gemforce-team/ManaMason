@@ -1,17 +1,18 @@
 package ManaMason.Utils 
 {
-	import ManaMason.Blueprint;
-	import ManaMason.BuildHelper;
-	import ManaMason.GCFWManaMason;
-	import com.giab.common.abstract.SpriteExt;
-	import com.giab.games.gcfw.GV;
-	import flash.display.MovieClip;
-	import flash.display.Shape;
-	import flash.events.Event;
 	/**
 	 * ...
 	 * @author Hellrage
 	 */
+	
+	import ManaMason.Blueprint;
+	import ManaMason.BuildHelper;
+	import ManaMason.ManaMasonMod;
+	import com.giab.common.abstract.SpriteExt;
+	import com.giab.games.gcfw.GV;
+	import flash.display.Shape;
+	import flash.events.Event;
+	
 	public class FieldWorker
 	{
 		public var mode:int;
@@ -138,9 +139,9 @@ package ManaMason.Utils
 			{
 				for (var j:int = captureCorners[0][0]; j <= captureCorners[1][0]; j++) 
 				{
-					for (var type:String in GCFWManaMason.structureClasses)
+					for (var type:String in ManaMasonMod.structureClasses)
 					{
-						if (grid[i][j] is GCFWManaMason.structureClasses[type] && regGrid[i][j] == grid[i][j])
+						if (grid[i][j] is ManaMasonMod.structureClasses[type] && regGrid[i][j] == grid[i][j])
 						{
 							if (grid[i][j].hasOwnProperty("insertedGem") && grid[i][j].insertedGem != null)
 							{

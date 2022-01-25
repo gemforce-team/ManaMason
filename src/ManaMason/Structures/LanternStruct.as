@@ -6,15 +6,13 @@ package ManaMason.Structures
 	 */
 	
 	import ManaMason.BlueprintOptions;
-	import ManaMason.BuildHelper;
-	import ManaMason.Utils.BlueprintOption;
-	import com.giab.games.gcfw.constants.BuildingType;
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.entity.Lantern;
-	import flash.display.Bitmap;
-	
 	import ManaMason.FakeGem;
 	import ManaMason.Structure;
+	import ManaMason.Utils.BlueprintOption;
+	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.constants.BuildingType;
+	import com.giab.games.gcfw.entity.Lantern;
+	import flash.display.Bitmap;
 	
 	public class LanternStruct extends Structure
 	{

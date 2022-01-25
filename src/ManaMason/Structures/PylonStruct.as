@@ -6,12 +6,11 @@ package ManaMason.Structures
 	 */
 	
 	import ManaMason.BlueprintOptions;
-	import ManaMason.Utils.BlueprintOption;
-	import com.giab.games.gcfw.constants.BuildingType;
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.entity.Pylon;
-	
 	import ManaMason.Structure;
+	import ManaMason.Utils.BlueprintOption;
+	import com.giab.games.gcfw.GV;
+	import com.giab.games.gcfw.constants.BuildingType;
+	import com.giab.games.gcfw.entity.Pylon;
 	
 	public class PylonStruct extends Structure
 	{

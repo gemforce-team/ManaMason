@@ -1,19 +1,18 @@
 package ManaMason.Utils 
 {
-	import ManaMason.BlueprintOptions;
-	import com.giab.games.gcfw.GV;
-	import com.giab.games.gcfw.mcDyn.McInfoPanel;
-	import com.giab.games.gcfw.mcDyn.McOptPanel;
-	import flash.display.Bitmap;
-	import flash.display.MovieClip;
-	import flash.events.Event;
-	import flash.events.MouseEvent;
-	import flash.display.DisplayObject;
-	import flash.text.TextField;
 	/**
 	 * ...
 	 * @author Hellrage
 	 */
+	
+	import ManaMason.BlueprintOptions;
+	import com.giab.games.gcfw.mcDyn.McInfoPanel;
+	import com.giab.games.gcfw.mcDyn.McOptPanel;
+	import flash.display.Bitmap;
+	import flash.display.MovieClip;
+	import flash.events.MouseEvent;
+	import flash.text.TextField;
+	
 	public class LockedInfoPanel extends MovieClip
 	{
 		private var hasOptions:Boolean;
