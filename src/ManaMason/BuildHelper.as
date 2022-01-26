@@ -130,14 +130,6 @@ package ManaMason
 				(Bitmap)(gem.mc.getChildAt(0)).bitmapData.dispose();
 			}
 		}
-		
-		public static function cleanupOnUnload(): void
-		{
-			for each(var gem: Gem in knownGemTemplates)
-			{
-				(Bitmap)(gem.mc.getChildAt(0)).bitmapData.dispose();
-			}
-		}
 	}
 
 }
