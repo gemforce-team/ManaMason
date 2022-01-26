@@ -47,6 +47,7 @@ package ManaMason
 		internal static var bezel:Bezel;
 		internal static var logger:Logger;
 		internal static var instance:ManaMasonMod;
+		internal static var gameObjects:Object;
 		
 		public static var gemTypeToName: Array;
 
@@ -82,13 +83,14 @@ package ManaMason
 		}
 		
 		// This method binds the class to the game's objects
-		public function bind(modLoader:Bezel, gameObjects:Object):void
+		public function bind(modLoader:Bezel, gObjects:Object):void
 		{
 			bezel = modLoader;
 			logger = bezel.getLogger("ManaMason");
 			if (!(bezel.mainLoader is GCFWBezel))
 				return;
 			
+			gameObjects = gObjects;
 			storage = File.applicationStorageDirectory.resolvePath("ManaMason");
 			this.shiftKeyPressed = false;
 			blueprintOptions = new BlueprintOptions();
@@ -294,11 +296,11 @@ package ManaMason
 		{
 			ManaMasonMod.bezel.addEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
 			ManaMasonMod.bezel.addEventListener("ingameNewScene", firstBlueprintLoad);
-			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
-			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true, 10);
-			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
-			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.ENTER_FRAME, this.fieldWorker.frameUpdate);
-			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
+			gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
+			gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true, 10);
+			gameObjects.main.stage.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true, 10);
+			gameObjects.main.stage.addEventListener(Event.ENTER_FRAME, this.fieldWorker.frameUpdate);
+			gameObjects.main.stage.addEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true, 10);
 			//ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
 			this.infoPanel.addEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
 		}
@@ -307,11 +309,11 @@ package ManaMason
 		{
 			ManaMasonMod.bezel.removeEventListener("ingameKeyDown", eh_interceptKeyboardEvent);
 			ManaMasonMod.bezel.removeEventListener("ingameNewScene", firstBlueprintLoad);
-			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
-			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
-			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
-			ManaMasonMod.bezel.gameObjects.main.stage.addEventListener(Event.ENTER_FRAME, this.fieldWorker.frameUpdate);
-			ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
+			gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_MOVE, this.mouseMoveBPUpdateHandler);
+			gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_DOWN, clickOnScene, true);
+			gameObjects.main.stage.removeEventListener(MouseEvent.RIGHT_MOUSE_DOWN, rightClickOnScene, true);
+			gameObjects.main.stage.addEventListener(Event.ENTER_FRAME, this.fieldWorker.frameUpdate);
+			gameObjects.main.stage.removeEventListener(MouseEvent.MOUSE_WHEEL, eh_ingameWheelScrolled, true);
 			//ManaMasonMod.bezel.gameObjects.main.stage.removeEventListener(Event.RESIZE, this.infoPanel.resizeHandler);
 			this.infoPanel.removeEventListener(MouseEvent.MOUSE_DOWN, redrawRetinaHud);
 		}
