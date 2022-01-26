@@ -38,7 +38,7 @@ package ManaMason
 	public class ManaMasonMod extends MovieClip implements BezelMod
 	{
 		
-		public function get VERSION():String { return "1.6"; }
+		public function get VERSION():String { return "1.7"; }
 		public function get BEZEL_VERSION():String { return "1.1.0"; }
 		public function get MOD_NAME():String { return "ManaMason"; }
 		

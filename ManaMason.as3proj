@@ -4,7 +4,7 @@
   <output>
     <movie outputType="Application" />
     <movie input="" />
-    <movie path="obj\ManaMason-1.6-GCFW.swf" />
+    <movie path="obj\ManaMason-1.7-GCFW.swf" />
     <movie fps="30" />
     <movie width="1920" />
     <movie height="1080" />
