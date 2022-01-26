@@ -124,7 +124,8 @@ package ManaMason
 								var gemId:int = parseInt(gemIdString);
 								if (!isNaN(gemId))
 								{
-									structure.gem = BuildHelper.CreateGemFromTemplate(res.gemTemplates[gemId] || null);
+									structure.gemTemplate = res.gemTemplates[gemId];
+									structure.gem = BuildHelper.CreateFakeGemFromTemplate(res.gemTemplates[gemId] || null);
 									structure.fitGemGhostImage();
 								}
 								grid[r + 1][c] = grid[r + 1][c + 1] = "-";

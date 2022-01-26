@@ -7,6 +7,7 @@ package ManaMason
 	
 	import ManaMason.Utils.BlueprintOption;
 	import com.giab.games.gccs.steam.GV;
+	import com.giab.common.data.ENumber;
 	import com.giab.games.gccs.steam.constants.GemComponentType;
 	import com.giab.games.gccs.steam.constants.GemEnhancementId;
 	import com.giab.games.gccs.steam.entity.Gem;
@@ -24,6 +25,15 @@ package ManaMason
 		public static const TILE_SIZE: Number = 17;
 		
 		private static var knownGemTemplates:Object = new Object();
+		public static var knownGemBitmapData:Object = new Object();
+		private static var pureGemManaValues:Array = [
+			[new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100)]
+		];
 		
 		public function BuildHelper() 
 		{
@@ -55,8 +65,23 @@ package ManaMason
 			}
 			
 			knownGemTemplates[spec] = gem;
-			GV.gemBitmapCreator.giveGemBitmaps(gem, false);
+			GV.gemBitmapCreator.giveGemBitmaps(gem, false); //randomize actual gems the way the game does it normally
 			GV.ingameCore.cnt.cntGemsInInventory.removeChild(gem.mc);
+			return gem;
+		}
+		
+		public static function CreateFakeGemFromTemplate(template:FakeGem): Gem
+		{
+			if (template == null)
+				return null;
+			var spec:String = template.specification;
+			if (knownGemBitmapData[spec])
+				return knownGemBitmapData[spec];
+				
+			var gem:Gem = new Gem();
+			gem.manaValuesByComponent = pureGemManaValues[template.gemType];
+			gem.grade.s(template.gemGrade);
+			GV.gemBitmapCreator.giveGemBitmaps(gem, false);
 			return gem;
 		}
 		
