@@ -6,6 +6,7 @@ package ManaMason.Utils
 	 */
 	
 	import ManaMason.BlueprintOptions;
+	import ManaMason.ManaMasonMod;
 	import com.giab.games.gccs.steam.mcDyn.McInfoPanel;
 	import com.giab.games.gccs.steam.mcDyn.McOptPanel;
 	import flash.display.Bitmap;
@@ -90,6 +91,7 @@ package ManaMason.Utils
 						var current:Boolean = opt.value;
 						opt.value = !current;
 						e.target.parent.btn.gotoAndStop(opt.value ? 2 : 1);
+						ManaMasonMod.selectedBlueprint.updateInPlace();
 						e.stopImmediatePropagation();
 					};
 				}(option);

@@ -16,10 +16,8 @@ package ManaMason
 		public var type:String;
 		public var ghost:MovieClip;
 		
-		protected var blueprintIndexX:int;
-		protected var blueprintIndexY:int;
-		public function get blueprintX():Number {return this.blueprintIndexX};
-		public function get blueprintY():Number {return this.blueprintIndexY};
+		public var blueprintIndexX:int;
+		public var blueprintIndexY:int;
 		
 		public var buildingGridX:int;
 		public var buildingGridY:int;
@@ -58,13 +56,10 @@ package ManaMason
 			return this.buildingGridX >= 0 && bX < BuildHelper.FIELD_WIDTH && this.buildingGridY >= 0 && bY < BuildHelper.FIELD_HEIGHT;
 		}
 		
-		public function setBuildingCoords(mouseX:Number, mouseY:Number): void
+		public function setBuildingCoords(x:Number, y:Number): void
 		{
-			var vX:Number = Math.floor((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE);
-			var vY:Number = Math.floor((mouseY - BuildHelper.TOP_UI_HEIGHT) / BuildHelper.TILE_SIZE);
-			
-			this.buildingGridX = vX + this.blueprintIndexX;
-			this.buildingGridY = vY + this.blueprintIndexY;
+			this.buildingGridX = x + this.blueprintIndexX;
+			this.buildingGridY = y + this.blueprintIndexY;
 			
 			this.buildingX = BuildHelper.WAVESTONE_WIDTH + BuildHelper.TILE_SIZE * this.buildingGridX + xOffset;
 			this.buildingY = BuildHelper.TOP_UI_HEIGHT + BuildHelper.TILE_SIZE * this.buildingGridY + yOffset;
