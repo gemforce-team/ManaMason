@@ -71,7 +71,7 @@ package ManaMason.Structures
 			return Math.max(0, GV.ingameCore.currentPylonBuildingManaCost.g());
 		}
 		
-		public override function insertGem(gem:Object): void
+		public override function insertGem(bpo:BlueprintOptions): void
 		{
 			
 		}
