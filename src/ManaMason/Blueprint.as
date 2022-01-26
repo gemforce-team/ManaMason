@@ -103,10 +103,30 @@ package ManaMason
 			return this;
 		}
 		
+		public function findDimensions(): void
+		{
+			var xMin:Number = BuildHelper.FIELD_WIDTH;
+			var xMax:Number = 0;
+			var yMin:Number = BuildHelper.FIELD_HEIGHT;
+			var yMax:Number = 0;
+			for each(var structure:Structure in this.structures)
+			{
+				xMin = Math.min(xMin, structure.blueprintIndexX);
+				xMax = Math.max(xMax, structure.blueprintIndexX + structure.size);
+				yMin = Math.min(yMin, structure.blueprintIndexY);
+				yMax = Math.max(yMax, structure.blueprintIndexY + structure.size);
+			}
+			this.dimX = xMax - xMin;
+			this.dimY = yMax - yMin;
+			for each(structure in this.structures)
+			{
+				structure.blueprintIndexX -= xMin;
+				structure.blueprintIndexY -= yMin;
+			}
+		}
+		
 		private static function parseBlueprintGrid(grid:Array, res:Blueprint): Blueprint
 		{
-			res.dimX = grid[0].length;
-			res.dimY = grid.length;
 			for (var r:int = 0; r < grid.length; r++)
 			{
 				for (var c:int = 0; c < grid[0].length; c++)
@@ -144,6 +164,7 @@ package ManaMason
 					}
 				}
 			}
+			res.findDimensions();
 			return res;
 		}
 		
@@ -280,26 +301,23 @@ package ManaMason
 		
 		public function updateOrigin(mouseX:Number, mouseY:Number, force: Boolean = false): void
 		{
-			var vX:Number = Math.floor((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE);
-			var vY:Number = Math.floor((mouseY - BuildHelper.TOP_UI_HEIGHT) / BuildHelper.TILE_SIZE);
-			
-			if (vX >= BuildHelper.FIELD_WIDTH || vX < 0 || vY >= BuildHelper.FIELD_HEIGHT || vY < 0)
-				return;
-				
-			if (this.lastOrigin.xTile != vX || this.lastOrigin.yTile != vY || force)
+			var fieldX:Number = Math.round((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE - this.dimX / 2);
+			var fieldY:Number = Math.round((mouseY - BuildHelper.TOP_UI_HEIGHT) / BuildHelper.TILE_SIZE - this.dimY / 2);
+			fieldX = Math.min(Math.max(fieldX, 0), BuildHelper.FIELD_WIDTH - this.dimX);
+			fieldY = Math.min(Math.max(fieldY, 0), BuildHelper.FIELD_HEIGHT - this.dimY);
+			if (this.lastOrigin.xTile != fieldX || this.lastOrigin.yTile != fieldY || force)
 			{
-				updateStructures(mouseX, mouseY);
+				updateStructures(fieldX, fieldY);
 			}
-			
-			this.lastOrigin.xTile = vX;
-			this.lastOrigin.yTile = vY;
+			this.lastOrigin.xTile = fieldX;
+			this.lastOrigin.yTile = fieldY;
 		}
 		
-		public function updateStructures(mouseX:Number, mouseY:Number): void
+		public function updateStructures(x:Number, y:Number): void
 		{
 			for each(var structure:Structure in this.structures)
 			{
-				structure.setBuildingCoords(mouseX, mouseY);
+				structure.setBuildingCoords(x, y);
 				
 				if (!structure.fitsOnScene())
 				{
@@ -509,8 +527,6 @@ package ManaMason
 			var tileProcessed: Boolean = false;
 			var bp: Blueprint = new Blueprint();
 			bp.blueprintName = "Captured BP";
-			bp.dimX = captureCorners[1][0] - captureCorners[0][0] + 1;
-			bp.dimY = captureCorners[1][1] - captureCorners[0][1] + 1;
 			for (var i:int = captureCorners[0][1]; i <= captureCorners[1][1]; i++) 
 			{
 				for (var j:int = captureCorners[0][0]; j <= captureCorners[1][0]; j++) 
@@ -538,6 +554,7 @@ package ManaMason
 					}
 				}
 			}
+			bp.findDimensions();
 			exportBlueprintFile(bp);
 			GV.vfxEngine.createFloatingText4(GV.main.mouseX, GV.main.mouseY < 60?Number(GV.main.mouseY + 30):Number(GV.main.mouseY - 20), "Blueprint captured!", 16768392, 18, "center", Math.random() * 3 - 1.5, -4 - Math.random() * 3, 0, 0.55, 46, 0, 13);
 			return bp;
@@ -574,7 +591,7 @@ package ManaMason
 			
 			for each(var struct:Structure in this.structures) 
 			{
-				grid[struct.blueprintY][struct.blueprintX] = struct.type;
+				grid[struct.blueprintIndexY][struct.blueprintIndexX] = struct.type;
 				if (struct.size == 2)
 				{
 					if (struct.gem != null && gemId <= 99)
@@ -591,8 +608,8 @@ package ManaMason
 								usedGems[spec] = gemId;
 								usedId = gemId;
 							}
-							grid[struct.blueprintY + 1][struct.blueprintX] = Math.floor(usedId / 10);
-							grid[struct.blueprintY + 1][struct.blueprintX + 1] = usedId % 10;
+							grid[struct.blueprintIndexY + 1][struct.blueprintIndexX] = Math.floor(usedId / 10);
+							grid[struct.blueprintIndexY + 1][struct.blueprintIndexX + 1] = usedId % 10;
 						}
 					}
 				}
