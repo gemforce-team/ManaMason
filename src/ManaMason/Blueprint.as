@@ -151,7 +151,8 @@ package ManaMason
 									}
 									else
 									{
-										structure.gem = BuildHelper.CreateGemFromTemplate(res.gemTemplates[gemId] || null);
+										structure.gemTemplate = res.gemTemplates[gemId];
+										structure.gem = BuildHelper.CreateFakeGemFromTemplate(res.gemTemplates[gemId] || null);
 										structure.fitGemGhostImage();
 									}
 								}

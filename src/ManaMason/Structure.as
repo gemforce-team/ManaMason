@@ -86,12 +86,7 @@ package ManaMason
 		{
 			if (bpo.read(BlueprintOption.CONJURE_GEMS))
 			{
-				if (this.gem != null)
-				{
-					var newGem: Gem = BuildHelper.dupeGem(bpo, this.gem);
-					if(newGem != null)
-						this.insertGem(newGem);
-				}
+				insertGem(bpo);
 			}
 		}
 		
@@ -131,11 +126,17 @@ package ManaMason
 			return 0;
 		}
 		
-		public function insertGem(gem:Object): void
+		public function insertGem(bpo: BlueprintOptions): void
 		{
-			if (gem == null)
+			var gemToInsert:Gem  = this.gem;
+			if (gemTemplate != null)
+				gemToInsert = BuildHelper.CreateGemFromTemplate(this.gemTemplate);
+				
+			var newGem: Gem = BuildHelper.dupeGem(bpo, gemToInsert);
+			if(newGem == null)
 				return;
-			GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX].insertGem(gem);
+				
+			GV.ingameCore.buildingAreaMatrix[buildingGridY][buildingGridX].insertGem(newGem);
 		}
 
 		public function fitGemGhostImage(): void
