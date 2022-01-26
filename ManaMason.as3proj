@@ -4,7 +4,7 @@
   <output>
     <movie outputType="Application" />
     <movie input="" />
-    <movie path="D:\Games\Steam\steamapps\common\GemCraft Chasing Shadows\Mods\ManaMason-1.6-GCCS.swf" />
+    <movie path="obj\ManaMason-1.6-GCCS.swf" />
     <movie fps="30" />
     <movie width="1920" />
     <movie height="1080" />
@@ -56,8 +56,8 @@
   </libraryPaths>
   <!-- External Libraries -->
   <externalLibraryPaths>
-    <element path="D:\Games\Steam\steamapps\common\GemCraft Frostborn Wrath\Mods\BezelModLoader.swc" />
-    <element path="src\GCCS.swc" />
+    <element path="%BezelLibs%\BezelModLoader.swc" />
+    <element path="%BezelLibs%\gc-cs-steam.swc" />
   </externalLibraryPaths>
   <!-- Runtime Shared Libraries -->
   <rslPaths>
