@@ -48,7 +48,7 @@ package ManaMason
 		internal static var gameObjects:Object;
 		
 		public static var gemTypeToName: Array;
-
+		
 		public static const GCCS_VERSION:String = "1.0.6";
 		
 		internal static var storage:File;

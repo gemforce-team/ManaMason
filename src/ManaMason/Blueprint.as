@@ -51,7 +51,6 @@ package ManaMason
 			if(buildHelperBitmaps == null)
 				initBuildingHelpers();
 			
-			this.blueprintName = "Empty BP";
 			this.structures = new Array();
 			this.blueprintName = "Empty BP";
 			this.gemTemplates = new Object();
