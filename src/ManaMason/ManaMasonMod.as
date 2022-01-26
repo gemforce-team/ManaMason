@@ -55,9 +55,9 @@ package ManaMason
 		
 		internal static var storage:File;
 		public static var structureClasses: Object;
+		public static var selectedBlueprint:Blueprint;
 		
 		private var blueprints:Array;
-		private var selectedBlueprint:Blueprint;
 		private var infoPanelTitle:TextField;
 		private var currentBlueprintIndex:int;
 		
@@ -240,21 +240,21 @@ package ManaMason
 		{
 			if (index < 0 || index >= this.blueprints.length)
 			{
-				this.selectedBlueprint = Blueprint.emptyBlueprint;
+				selectedBlueprint = Blueprint.emptyBlueprint;
 				this.currentBlueprintIndex = -1;
 			}
 			else
 			{
 				this.currentBlueprintIndex = index;
 				if(this.buildingMode)
-					GV.main.cntScreens.cntIngame.removeChild(this.selectedBlueprint);
-				this.selectedBlueprint = this.blueprints[this.currentBlueprintIndex];
-				this.infoPanelTitle.text = this.selectedBlueprint.blueprintName;
-				this.selectedBlueprint.resetGhosts();
-				this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+					GV.main.cntScreens.cntIngame.removeChild(selectedBlueprint);
+				selectedBlueprint = this.blueprints[this.currentBlueprintIndex];
+				this.infoPanelTitle.text = selectedBlueprint.blueprintName;
+				selectedBlueprint.resetGhosts();
+				selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
 				if (this.buildingMode)
 				{
-					GV.main.cntScreens.cntIngame.addChild(this.selectedBlueprint);
+					GV.main.cntScreens.cntIngame.addChild(selectedBlueprint);
 					drawBuildingOverlay(null);
 				}
 			}
@@ -452,20 +452,20 @@ package ManaMason
 				}
 				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Flip blueprint vertically").matches(pE))
 				{
-					this.selectedBlueprint.flipVertical();
-					this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+					selectedBlueprint.flipVertical();
+					selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
 					e.eventArgs.continueDefault = false;
 				}
 				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Flip blueprint horizontally").matches(pE))
 				{
-					this.selectedBlueprint.flipHorizontal();
-					this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+					selectedBlueprint.flipHorizontal();
+					selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
 					e.eventArgs.continueDefault = false;
 				}
 				else if (ManaMasonMod.bezel.keybindManager.getHotkeyValue("ManaMason: Rotate blueprint").matches(pE))
 				{
-					this.selectedBlueprint.rotate();
-					this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+					selectedBlueprint.rotate();
+					selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
 					e.eventArgs.continueDefault = false;
 				}
 			}
@@ -562,14 +562,14 @@ package ManaMason
 			{
 				this.buildingMode = true;
 				GV.mcInfoPanel.visible = false;
-				this.selectedBlueprint.resetGhosts();
-				this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
-				GV.main.cntScreens.cntIngame.addChild(this.selectedBlueprint);
+				selectedBlueprint.resetGhosts();
+				selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY, true);
+				GV.main.cntScreens.cntIngame.addChild(selectedBlueprint);
 				//changeRightSideUIVisibility(false);
 				
 				infoPanel.setup(1920 - BuildHelper.WAVESTONE_WIDTH - BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH, 670, BuildHelper.WAVESTONE_WIDTH + BuildHelper.TILE_SIZE * BuildHelper.FIELD_WIDTH + 4, 230, 3.087007744E9);
 				
-				this.infoPanelTitle.text = this.selectedBlueprint.blueprintName;
+				this.infoPanelTitle.text = selectedBlueprint.blueprintName;
 				this.infoPanelTitle.x = 0;
 				this.infoPanelTitle.y = 15;
 				this.infoPanelTitle.width = this.infoPanel.width;
@@ -592,7 +592,7 @@ package ManaMason
 			restoreAllMouseInput();
 			//changeRightSideUIVisibility(true);
 			GV.mcInfoPanel.visible = true;
-			GV.main.cntScreens.cntIngame.removeChild(this.selectedBlueprint);
+			GV.main.cntScreens.cntIngame.removeChild(selectedBlueprint);
 			this.buildingMode = false;
 		}
 		
@@ -661,7 +661,7 @@ package ManaMason
 			
 			if (this.buildingMode)
 			{
-				this.selectedBlueprint.castBuild(blueprintOptions);
+				selectedBlueprint.castBuild(blueprintOptions);
 			}
 			else if (this.fieldWorker.busy)
 			{
@@ -678,7 +678,7 @@ package ManaMason
 			var capturedBP:Blueprint = bp.setBlueprintOptions(blueprintOptions);
 			this.blueprints.unshift(capturedBP);
 			this.currentBlueprintIndex = 0;
-			this.selectedBlueprint = this.blueprints[currentBlueprintIndex];
+			selectedBlueprint = this.blueprints[currentBlueprintIndex];
 		}
 		
 		private function wrapForWorkerOnDone(callback:Function):Function
@@ -736,7 +736,7 @@ package ManaMason
 		public function updateBPOrigin(): void
 		{
 			if(this.buildingMode && this.currentBlueprintIndex != -1)
-				this.selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY);
+				selectedBlueprint.updateOrigin(GV.main.mouseX, GV.main.mouseY);
 		}
 		
 		private function showInfoPanel(): void

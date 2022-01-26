@@ -299,6 +299,11 @@ package ManaMason
 			}
 		}
 		
+		public function updateInPlace(): void
+		{
+			updateStructures(this.lastOrigin.xTile, this.lastOrigin.yTile);
+		}
+		
 		public function updateOrigin(mouseX:Number, mouseY:Number, force: Boolean = false): void
 		{
 			var fieldX:Number = Math.round((mouseX - BuildHelper.WAVESTONE_WIDTH) / BuildHelper.TILE_SIZE - this.dimX / 2);
@@ -340,8 +345,21 @@ package ManaMason
 					structure.ghost.transform.colorTransform = new ColorTransform();
 				
 				structure.ghost.visible = true;
-				if(structure.gem != null)
-					structure.gem.mc.visible = true;
+				if (structure.gem != null)
+				{
+					structure.gemGhost.visible = true;
+					if (!blueprintOptions.read(BlueprintOption.CONJURE_GEMS))
+					{
+						if (blueprintOptions.read(BlueprintOption.SHOW_UNPLACED))
+							structure.gemGhost.transform.colorTransform = redColor;
+						else
+							structure.gemGhost.visible = false;
+						
+					}
+					else
+						structure.gemGhost.transform.colorTransform = new ColorTransform();
+				}
+				
 				structure.ghost.x = structure.buildingX;
 				structure.ghost.y = structure.buildingY;
 			}

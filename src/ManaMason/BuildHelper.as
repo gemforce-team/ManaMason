@@ -82,6 +82,7 @@ package ManaMason
 			gem.manaValuesByComponent = pureGemManaValues[template.gemType];
 			gem.grade.s(template.gemGrade);
 			GV.gemBitmapCreator.giveGemBitmaps(gem, false);
+			GV.ingameCore.cnt.cntGemsInInventory.removeChild(gem.mc);
 			return gem;
 		}
 		
