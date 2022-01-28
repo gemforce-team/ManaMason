@@ -27,12 +27,15 @@ package ManaMason
 		private static var knownGemTemplates:Object = new Object();
 		public static var knownGemBitmapData:Object = new Object();
 		private static var pureGemManaValues:Array = [
-			[new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0)],
-			[new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0)],
-			[new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0)],
-			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0)],
-			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0)],
-			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100)]
+			[new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100), new ENumber(0)],
+			[new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(0), new ENumber(100)]
 		];
 		
 		public function BuildHelper() 
