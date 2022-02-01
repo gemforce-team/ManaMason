@@ -37,7 +37,7 @@ package ManaMason
 	{
 		
 		public function get VERSION():String { return "1.7"; }
-		public function get BEZEL_VERSION():String { return "1.1.0"; }
+		public function get BEZEL_VERSION():String { return "2.0.0"; }
 		public function get MOD_NAME():String { return "ManaMason"; }
 		
 		private var manaMason:Object;
