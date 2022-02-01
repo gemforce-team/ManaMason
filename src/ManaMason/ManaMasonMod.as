@@ -348,8 +348,9 @@ package ManaMason
 		
 		private function cleanupAllBlueprints(): void
 		{
-			for each(var bp: Blueprint in this.blueprints)
-				bp.cleanup();
+			if(this.blueprints)
+				for each(var bp: Blueprint in this.blueprints)
+					bp.cleanup();
 		}
 		
 		public function eh_interceptKeyboardEvent(e:Object): void

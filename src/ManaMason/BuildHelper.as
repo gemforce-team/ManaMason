@@ -91,7 +91,7 @@ package ManaMason
 		
 		public static function dupeGem(bpo: BlueprintOptions, gem: Gem): Gem
 		{
-			if (gem == null)
+			if (gem == null || !gemTypesAvailable(gem))
 				return null;
 				
 			if (bpo.read(BlueprintOption.SPEND_MANA))
@@ -111,6 +111,21 @@ package ManaMason
 			GV.ingameCore.gems.push(newGem);
 			
 			return newGem;
+		}
+		
+		public static function gemTypeAvailable(type: int): Boolean
+		{
+			return GV.ingameCore.arrIsSpellBtnVisible[type+6];
+		}
+		
+		public static function gemTypesAvailable(gem: Gem): Boolean
+		{
+			for (var type:int = 0; type < gem.manaValuesByComponent.length; type++)
+			{
+				if (!GV.ingameCore.arrIsSpellBtnVisible[type] && gem.manaValuesByComponent[type].g() > 0)
+					return false;
+			}
+			return true;
 		}
 		
 		private static function updateManaExpenditureStats(gem: Gem): void
