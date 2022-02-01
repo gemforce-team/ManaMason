@@ -145,7 +145,7 @@ package ManaMason
 			gemTypeToName[2] = "red";
 			gemTypeToName[3] = "purple";
 			gemTypeToName[4] = "green";
-			gemTypeToName[5] = "slowing";
+			gemTypeToName[5] = "blue";
 			
 			structureClasses = new Object();
 			structureClasses['w'] = Wall;
@@ -350,8 +350,9 @@ package ManaMason
 		
 		private function cleanupAllBlueprints(): void
 		{
-			for each(var bp: Blueprint in this.blueprints)
-				bp.cleanup();
+			if(this.blueprints)
+				for each(var bp: Blueprint in this.blueprints)
+					bp.cleanup();
 		}
 		
 		public function eh_interceptKeyboardEvent(e:Object): void
