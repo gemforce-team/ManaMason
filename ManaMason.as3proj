@@ -57,7 +57,7 @@
   <!-- External Libraries -->
   <externalLibraryPaths>
     <element path="%BezelLibs%\BezelModLoader.swc" />
-    <element path="%BezelLibs%\GemCraft Frostborn Wrath.swc" />
+    <element path="%BezelLibs%\GemCraft.Frostborn.Wrath.swc" />
   </externalLibraryPaths>
   <!-- Runtime Shared Libraries -->
   <rslPaths>
