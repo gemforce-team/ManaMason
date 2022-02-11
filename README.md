@@ -32,8 +32,6 @@ That folder is referred to as **ManaMason folder** in this readme.
 
 * The blueprints are loaded from a `blueprints` folder in your ManaMason folder, you can have as many as you need and switch between them with hotkeys. 
 
-* You can also capture the structures that you've already built. Activate capture mode by pressing Ctrl+C and select the area you'd like to copy. A blueprint will be generated in your blueprint folder and added to your loaded blueprints.
-
 * Only buildings that you have unlocked (either have the skill or allowed in your current trial) are placeable, no cheating!
 
 * You can specify gems to be socketed into your buildings.
