@@ -52,17 +52,7 @@ package ManaMason
 			gem = GV.ingameCore.creator.createGem(template.gemGrade, template.gemType, false, false);
 			
 			gem.targetPriority = template.targetPriority;
-			
-			var oldRatio:Number = gem.rangeRatio.g();
-			var range4:Number = gem.sd4_IntensityMod.range.g();
-			var range5:Number = gem.sd5_EnhancedOrTrapOrLantern.range.g();
 			gem.rangeRatio.s(template.rangeMultiplier);
-			gem.sd4_IntensityMod.range.s(range4 / oldRatio * gem.rangeRatio.g());
-			gem.sd5_EnhancedOrTrapOrLantern.range.s(range5 / oldRatio * gem.rangeRatio.g());
-			if(gem.enhancementType == GemEnhancementId.BEAM)
-			{
-				gem.sd5_EnhancedOrTrapOrLantern.range.s(Math.min(gem.sd5_EnhancedOrTrapOrLantern.range.g(),170));
-			}
 			
 			knownGemTemplates[spec] = gem;
 			GV.gemBitmapCreator.giveGemBitmaps(gem, false); //randomize actual gems the way the game does it normally
