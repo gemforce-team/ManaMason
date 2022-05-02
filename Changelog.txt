@@ -19,3 +19,6 @@
 	Added capture mode. Press Ctrl+Insert to begin, then click the top left and bottom right corners of the rectangle you'd like to capture. ManaMason witll grab the buildings and generate a blueprint. Reload the blueprints to use the newly made one immediately.
 24.01.2022 v1.6
 	Now uses Bezel's keybinds. New UI, better capture mode.
+04.02.2022 v1.7
+	Updated for Bezel 2.0.0
+	
